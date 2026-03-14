@@ -33,7 +33,7 @@ function PreviewContent({ asset }: { asset: Asset }): React.JSX.Element {
   if (IMAGE_EXTS.has(ext) || GIF_EXTS.has(ext) || SVG_EXTS.has(ext)) {
     return <ImagePreview asset={asset} />
   }
-  if (AUDIO_EXTS.has(ext)) return <AudioPreview asset={asset} />
+  if (AUDIO_EXTS.has(ext)) return <AudioPreview asset={asset} autoPlay />
   if (VIDEO_EXTS.has(ext)) return <VideoPreview asset={asset} />
   if (FONT_EXTS.has(ext)) return <FontPreview asset={asset} />
   if (MODEL_EXTS.has(ext)) return <Model3DPreview asset={asset} />

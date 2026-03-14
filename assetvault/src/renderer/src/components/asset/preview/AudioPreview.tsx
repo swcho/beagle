@@ -5,6 +5,7 @@ import type { Asset } from '@shared/types'
 
 interface Props {
   asset: Asset
+  autoPlay?: boolean
 }
 
 function formatTime(sec: number): string {
@@ -13,12 +14,28 @@ function formatTime(sec: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export function AudioPreview({ asset }: Props): React.JSX.Element {
+export function AudioPreview({ asset, autoPlay = false }: Props): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const duration = asset.duration ?? 0
+
+  // 자동 재생
+  useEffect(() => {
+    if (!autoPlay) return
+    const audio = audioRef.current
+    if (!audio) return
+    audio.play().then(() => setIsPlaying(true)).catch(() => {})
+  }, [autoPlay])
+
+  // 언마운트 시 정지
+  useEffect(() => {
+    const audio = audioRef.current
+    return () => {
+      audio?.pause()
+    }
+  }, [])
 
   // 웨이브폼 렌더링
   useEffect(() => {
