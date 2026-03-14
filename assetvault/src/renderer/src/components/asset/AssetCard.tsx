@@ -78,7 +78,7 @@ export function AssetCard({ asset }: AssetCardProps): React.JSX.Element {
         <div className="relative w-full aspect-square bg-zinc-700 flex items-center justify-center overflow-hidden">
           {hasThumbnail && !imgError ? (
             <img
-              src={`file://${asset.thumbnail}`}
+              src={`local-file://${asset.thumbnail}`}
               alt={asset.name}
               className="w-full h-full object-contain"
               loading="lazy"

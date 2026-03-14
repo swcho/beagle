@@ -12,7 +12,7 @@ export function FontPreview({ asset }: Props): React.JSX.Element {
 
   useEffect(() => {
     const family = `preview-${asset.id}`
-    const font = new FontFace(family, `url("file://${asset.path}")`)
+    const font = new FontFace(family, `url("local-file://${asset.path}")`)
 
     font.load()
       .then((loadedFont) => {

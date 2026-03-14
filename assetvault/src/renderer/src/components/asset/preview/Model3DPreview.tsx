@@ -41,7 +41,7 @@ export function Model3DPreview({ asset }: Props): React.JSX.Element {
 
     // Load model
     const ext = asset.ext.toLowerCase()
-    const url = `file://${asset.path}`
+    const url = `local-file://${asset.path}`
 
     function fitCamera(object: THREE.Object3D): void {
       const box = new THREE.Box3().setFromObject(object)

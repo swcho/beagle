@@ -5,7 +5,7 @@ interface Props { asset: Asset }
 export function VideoPreview({ asset }: Props): React.JSX.Element {
   return (
     <video
-      src={`file://${asset.path}`}
+      src={`local-file://${asset.path}`}
       autoPlay
       muted
       loop
