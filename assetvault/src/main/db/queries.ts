@@ -78,6 +78,12 @@ export function upsertAsset(
     createdAt: asset.createdAt,
     importedAt: asset.importedAt,
   })
+
+  // FTS 인덱스 업데이트
+  const row = db.prepare(`SELECT rowid FROM assets WHERE id = ?`).get(asset.id) as { rowid: number } | undefined
+  if (row) {
+    db.prepare(`INSERT OR REPLACE INTO assets_fts(rowid, name) VALUES (?, ?)`).run(row.rowid, asset.name)
+  }
 }
 
 export function updateAssetThumbnail(
@@ -91,11 +97,18 @@ export function updateAssetThumbnail(
   `).run(thumbnail, JSON.stringify(colors), id)
 }
 
-export function getAssets(filter: AssetFilter): Asset[] {
+export function getAssets(filter: AssetFilter & { _ids?: string[] }): Asset[] {
   const db = getDatabase()
 
   const conditions: string[] = []
   const params: Record<string, unknown> = {}
+
+  // 검색 결과 ID 목록 제한
+  if (filter._ids && filter._ids.length > 0) {
+    const placeholders = filter._ids.map((_, i) => `@_id${i}`).join(', ')
+    filter._ids.forEach((id, i) => { params[`_id${i}`] = id })
+    conditions.push(`a.id IN (${placeholders})`)
+  }
 
   if (filter.types && filter.types.length > 0) {
     const { SUPPORTED_FORMATS } = require('../../shared/types')
@@ -212,6 +225,92 @@ export function updateAssetTags(assetId: string, tagIds: string[]): void {
     }
   })
   update()
+}
+
+// ── 검색 ────────────────────────────────────────────────────────────
+
+export function searchAssets(query: string): Asset[] {
+  const db = getDatabase()
+
+  // FTS5 쿼리 — 특수문자 이스케이프 후 prefix 검색
+  const escaped = query.replace(/['"*]/g, ' ').trim()
+  if (!escaped) return []
+
+  const ftsQuery = escaped.split(/\s+/).map((w) => `"${w}"*`).join(' ')
+
+  const rows = db.prepare(`
+    SELECT
+      a.*,
+      json_group_array(
+        CASE WHEN t.id IS NOT NULL
+          THEN json_object('id', t.id, 'name', t.name, 'color', t.color)
+          ELSE NULL
+        END
+      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json
+    FROM assets a
+    JOIN assets_fts fts ON fts.rowid = a.rowid
+    LEFT JOIN asset_tags at3 ON at3.asset_id = a.id
+    LEFT JOIN tags t ON t.id = at3.tag_id
+    WHERE assets_fts MATCH ?
+    GROUP BY a.id
+    ORDER BY rank
+    LIMIT 200
+  `).all(ftsQuery) as AssetRow[]
+
+  return rows.map(rowToAsset)
+}
+
+function hexToHsl(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  if (max === min) return [0, 0, l]
+  const d = max - min
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+  let h = 0
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6
+  else if (max === g) h = ((b - r) / d + 2) / 6
+  else h = ((r - g) / d + 4) / 6
+  return [h, s, l]
+}
+
+function hslDistance(a: [number, number, number], b: [number, number, number]): number {
+  const dh = Math.min(Math.abs(a[0] - b[0]), 1 - Math.abs(a[0] - b[0]))
+  const ds = a[1] - b[1]
+  const dl = a[2] - b[2]
+  return Math.sqrt(dh * dh + ds * ds + dl * dl)
+}
+
+export function searchByColor(hex: string, tolerance: number): Asset[] {
+  const db = getDatabase()
+  const target = hexToHsl(hex)
+
+  const rows = db.prepare(`
+    SELECT
+      a.*,
+      json_group_array(
+        CASE WHEN t.id IS NOT NULL
+          THEN json_object('id', t.id, 'name', t.name, 'color', t.color)
+          ELSE NULL
+        END
+      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json
+    FROM assets a
+    LEFT JOIN asset_tags at3 ON at3.asset_id = a.id
+    LEFT JOIN tags t ON t.id = at3.tag_id
+    WHERE a.colors != '[]'
+    GROUP BY a.id
+  `).all() as AssetRow[]
+
+  return rows
+    .map(rowToAsset)
+    .filter((asset) =>
+      asset.colors.some((c) => {
+        try { return hslDistance(hexToHsl(c), target) <= tolerance }
+        catch { return false }
+      })
+    )
 }
 
 export function getTagAssetCounts(): Record<string, number> {

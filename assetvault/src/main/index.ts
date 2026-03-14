@@ -6,6 +6,7 @@ import { initializeDatabase } from './db/schema'
 import { registerLibraryHandlers } from './ipc/library'
 import { registerThumbnailHandlers } from './ipc/thumbnail'
 import { registerTagHandlers } from './ipc/tags'
+import { registerSearchHandlers } from './ipc/search'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -26,6 +27,7 @@ function createWindow(): void {
   registerLibraryHandlers(mainWindow)
   registerThumbnailHandlers(mainWindow)
   registerTagHandlers()
+  registerSearchHandlers()
 
   mainWindow.on('ready-to-show', () => {
     mainWindow!.show()

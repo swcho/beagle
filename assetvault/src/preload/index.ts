@@ -10,6 +10,8 @@ const api: ElectronAPI = {
   searchAssets: (query: string) => ipcRenderer.invoke('search-assets', query),
   searchByColor: (hex: string, tolerance: number) =>
     ipcRenderer.invoke('search-by-color', hex, tolerance),
+  searchCombined: (filter: AssetFilter) =>
+    ipcRenderer.invoke('search-combined', filter),
   getTags: () => ipcRenderer.invoke('get-tags'),
   createTag: (name: string, color: string) => ipcRenderer.invoke('create-tag', name, color),
   deleteTag: (id: string) => ipcRenderer.invoke('delete-tag', id),

@@ -34,6 +34,7 @@ export interface AssetFilter {
   tagIds?: string[]
   folderId?: string
   colors?: string[]
+  colorTolerance?: number
   sortBy?: 'name' | 'size' | 'createdAt' | 'importedAt'
   sortOrder?: 'asc' | 'desc'
   limit?: number
@@ -54,6 +55,7 @@ export interface ElectronAPI {
   generateThumbnails: (ids: string[]) => Promise<void>
   searchAssets: (query: string) => Promise<Asset[]>
   searchByColor: (hex: string, tolerance: number) => Promise<Asset[]>
+  searchCombined: (filter: AssetFilter) => Promise<Asset[]>
   getTags: () => Promise<Tag[]>
   createTag: (name: string, color: string) => Promise<Tag>
   deleteTag: (id: string) => Promise<void>

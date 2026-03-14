@@ -11,7 +11,7 @@ import type { ImportProgress } from '../../shared/types'
 
 function App(): React.JSX.Element {
   const { assets, isLoading, fetchAssets, updateThumbnail } = useLibraryStore()
-  const { query, types, tagIds, colors, sortBy, sortOrder } = useFilterStore()
+  const { query, types, tagIds, colors, colorTolerance, sortBy, sortOrder } = useFilterStore()
   const { selectedAssetId, setSelectedAssetId } = useUIStore()
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [importing, setImporting] = useState(false)
@@ -20,8 +20,8 @@ function App(): React.JSX.Element {
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) ?? null
 
   useEffect(() => {
-    fetchAssets({ query, types, tagIds, colors, sortBy, sortOrder })
-  }, [query, types, tagIds, colors, sortBy, sortOrder])
+    fetchAssets({ query, types, tagIds, colors, colorTolerance, sortBy, sortOrder })
+  }, [query, types, tagIds, colors, colorTolerance, sortBy, sortOrder])
 
   useEffect(() => {
     const onProgress = (...args: unknown[]): void => {
@@ -49,7 +49,7 @@ function App(): React.JSX.Element {
       setImporting(true)
       setProgress(null)
       await window.api.importFolder(folder)
-      await fetchAssets({ query, types, tagIds, colors, sortBy, sortOrder })
+      await fetchAssets({ query, types, tagIds, colors, colorTolerance, sortBy, sortOrder })
     } catch (e) {
       setError(e instanceof Error ? e.message : '임포트 중 오류가 발생했습니다.')
     } finally {
@@ -59,7 +59,7 @@ function App(): React.JSX.Element {
   }
 
   async function handleAssetUpdate(): Promise<void> {
-    await fetchAssets({ query, types, tagIds, colors, sortBy, sortOrder })
+    await fetchAssets({ query, types, tagIds, colors, colorTolerance, sortBy, sortOrder })
   }
 
   return (

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { LayoutGrid, List, SortAsc, SortDesc, FolderOpen, X } from 'lucide-react'
 import { useFilterStore } from '../../stores/filterStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -16,9 +16,27 @@ export function TopBar({ progress, importing, onImport }: TopBarProps): React.JS
   const { viewMode, setViewMode } = useUIStore()
   const { tags } = useTagStore()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [localQuery, setLocalQuery] = useState(query)
 
   const hasActiveFilters = tagIds.length > 0 || types.length > 0
+
+  // Cmd+F: 검색창 포커스 / Esc: 검색 초기화
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent): void {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+      if (e.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        setLocalQuery('')
+        setFilter({ query: '' })
+        searchInputRef.current?.blur()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [setFilter])
 
   function handleQueryChange(e: React.ChangeEvent<HTMLInputElement>): void {
     const val = e.target.value
@@ -47,10 +65,11 @@ export function TopBar({ progress, importing, onImport }: TopBarProps): React.JS
         <span className="text-sm font-semibold text-zinc-100 mr-1">AssetVault</span>
 
         <input
+          ref={searchInputRef}
           type="text"
           value={localQuery}
           onChange={handleQueryChange}
-          placeholder="검색..."
+          placeholder="검색... (⌘F)"
           className="flex-1 max-w-sm px-3 py-1.5 bg-zinc-700 border border-zinc-600 rounded text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
         />
 

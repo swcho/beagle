@@ -6,6 +6,7 @@ interface FilterState {
   types: AssetType[]
   tagIds: string[]
   colors: string[]
+  colorTolerance: number
   sortBy: 'name' | 'size' | 'createdAt' | 'importedAt'
   sortOrder: 'asc' | 'desc'
   setFilter: (partial: Partial<Omit<FilterState, 'setFilter' | 'resetFilter'>>) => void
@@ -17,6 +18,7 @@ const defaultFilter = {
   types: [] as AssetType[],
   tagIds: [] as string[],
   colors: [] as string[],
+  colorTolerance: 0.25,
   sortBy: 'importedAt' as const,
   sortOrder: 'desc' as const,
 }

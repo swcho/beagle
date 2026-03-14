@@ -18,7 +18,10 @@ export const useLibraryStore = create<LibraryState>((set) => ({
   fetchAssets: async (filter: AssetFilter) => {
     set({ isLoading: true })
     try {
-      const assets = await window.api.getAssets(filter)
+      const needsCombined = (filter.query && filter.query.trim()) || (filter.colors && filter.colors.length > 0)
+      const assets = needsCombined
+        ? await window.api.searchCombined(filter)
+        : await window.api.getAssets(filter)
       set({ assets, totalCount: assets.length, isLoading: false })
     } catch (err) {
       console.error('fetchAssets 실패:', err)
