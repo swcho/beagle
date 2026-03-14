@@ -1,7 +1,7 @@
 import { join } from 'path'
 
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 
 import icon from '../../resources/icon.png?asset'
 
@@ -13,13 +13,6 @@ import { registerThumbnailHandlers } from './ipc/thumbnail'
 
 // 개발 빌드 확인 후 종료 시 pkill -f "assetvault-dev" 로 정확히 타겟팅
 if (is.dev) process.title = 'assetvault-dev'
-// local-file:// 프로토콜 등록 — http://localhost 컨텍스트에서 로컬 파일 접근 허용
-protocol.registerSchemesAsPrivileged([
-  {
-    scheme: 'local-file',
-    privileges: { secure: true, standard: false, bypassCSP: true, corsEnabled: true, stream: true }
-  }
-])
 
 let mainWindow: BrowserWindow | null = null
 
@@ -33,7 +26,8 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      webSecurity: !is.dev
     }
   })
 
@@ -64,12 +58,6 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // local-file:// → file:// 프록시
-  protocol.handle('local-file', (request) => {
-    const filePath = request.url.slice('local-file://'.length)
-    return net.fetch(`file://${filePath}`)
-  })
-
   // Initialize database
   initializeDatabase()
 

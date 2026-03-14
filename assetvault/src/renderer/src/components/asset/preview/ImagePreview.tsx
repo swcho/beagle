@@ -13,7 +13,7 @@ export function ImagePreview({ asset }: Props): React.JSX.Element {
   return (
     <div className="flex flex-col gap-2">
       <img
-        src={`local-file://${asset.path}`}
+        src={`file://${asset.path}`}
         alt={asset.name}
         className="w-full max-h-72 object-contain rounded"
       />

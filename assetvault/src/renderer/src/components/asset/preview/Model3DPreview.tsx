@@ -28,7 +28,7 @@ function GLTFModel({ url }: { url: string }): React.JSX.Element {
 }
 
 function SceneModel({ asset }: { asset: Asset }): React.JSX.Element {
-  const url = `local-file://${asset.path}`
+  const url = `file://${asset.path}`
   const ext = asset.ext.toLowerCase()
 
   if (ext === 'obj') return <OBJModel url={url} />

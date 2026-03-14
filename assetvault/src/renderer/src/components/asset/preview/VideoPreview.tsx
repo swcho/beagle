@@ -7,7 +7,7 @@ interface Props {
 export function VideoPreview({ asset }: Props): React.JSX.Element {
   return (
     <video
-      src={`local-file://${asset.path}`}
+      src={`file://${asset.path}`}
       autoPlay
       muted
       loop

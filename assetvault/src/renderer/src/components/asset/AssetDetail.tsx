@@ -129,7 +129,7 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
       <div className="w-full aspect-square bg-zinc-700 flex items-center justify-center">
         {hasThumbnail ? (
           <img
-            src={`local-file://${asset.thumbnail}`}
+            src={`file://${asset.thumbnail}`}
             alt={asset.name}
             className="w-full h-full object-contain"
           />

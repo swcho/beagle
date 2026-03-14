@@ -33,7 +33,7 @@ export function AudioPreview({ asset }: Props): React.JSX.Element {
     async function drawWaveform(): Promise<void> {
       audioCtx = new AudioContext()
       try {
-        const response = await fetch(`local-file://${asset.path}`)
+        const response = await fetch(`file://${asset.path}`)
         const arrayBuffer = await response.arrayBuffer()
         const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
         const data = audioBuffer.getChannelData(0)
@@ -125,7 +125,7 @@ export function AudioPreview({ asset }: Props): React.JSX.Element {
 
       <audio
         ref={audioRef}
-        src={`local-file://${asset.path}`}
+        src={`file://${asset.path}`}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
         preload="metadata"
