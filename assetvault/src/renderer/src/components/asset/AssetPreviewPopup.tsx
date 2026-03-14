@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
-import type { Asset } from '../../../../shared/types'
+import type { Asset } from '@shared/types'
 
 import { AudioPreview } from './preview/AudioPreview'
 import { FontPreview } from './preview/FontPreview'

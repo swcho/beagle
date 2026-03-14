@@ -1,8 +1,9 @@
 import { X, FolderOpen, Tag as TagIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
-import type { Asset, Tag } from '../../../../shared/types'
-import { useTagStore } from '../../stores/tagStore'
+import type { Asset, Tag } from '@shared/types'
+
+import { useTagStore } from '@renderer/stores/tagStore'
 
 interface Props {
   asset: Asset

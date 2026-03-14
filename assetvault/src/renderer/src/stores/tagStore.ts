@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { Tag } from '../../../shared/types'
+import type { Tag } from '@shared/types'
 
 interface TagState {
   tags: Tag[]

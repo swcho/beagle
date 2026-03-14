@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { Asset, AssetFilter } from '../../../shared/types'
+import type { Asset, AssetFilter } from '@shared/types'
 
 interface LibraryState {
   assets: Asset[]

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
-import { useLibraryStore } from '../stores/libraryStore'
-import { useUIStore } from '../stores/uiStore'
+import { useLibraryStore } from '@renderer/stores/libraryStore'
+import { useUIStore } from '@renderer/stores/uiStore'
 
 interface Options {
   onImport: () => void

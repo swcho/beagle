@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 
-import type { Asset } from '../../../../../shared/types'
+import type { Asset } from '@shared/types'
 
 interface Props {
   asset: Asset

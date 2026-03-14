@@ -2,9 +2,10 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { FolderOpen, SearchX } from 'lucide-react'
 import { useRef, useEffect, useMemo } from 'react'
 
-import type { Asset } from '../../../../shared/types'
-import { useFilterStore } from '../../stores/filterStore'
-import { useUIStore } from '../../stores/uiStore'
+import type { Asset } from '@shared/types'
+
+import { useFilterStore } from '@renderer/stores/filterStore'
+import { useUIStore } from '@renderer/stores/uiStore'
 
 import { AssetCard } from './AssetCard'
 

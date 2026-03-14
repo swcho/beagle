@@ -1,4 +1,4 @@
-import type { Asset } from '../../../../../shared/types'
+import type { Asset } from '@shared/types'
 
 interface Props {
   asset: Asset

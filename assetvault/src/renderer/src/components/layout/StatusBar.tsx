@@ -1,5 +1,5 @@
-import { useLibraryStore } from '../../stores/libraryStore'
-import { useUIStore } from '../../stores/uiStore'
+import { useLibraryStore } from '@renderer/stores/libraryStore'
+import { useUIStore } from '@renderer/stores/uiStore'
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`

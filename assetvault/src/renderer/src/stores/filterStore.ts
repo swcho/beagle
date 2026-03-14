@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { AssetType } from '../../../shared/types'
+import type { AssetType } from '@shared/types'
 
 interface FilterState {
   query: string

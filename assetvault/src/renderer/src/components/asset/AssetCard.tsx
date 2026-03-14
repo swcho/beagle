@@ -1,9 +1,10 @@
 import { FileImage, Music, Video, Type, Box, FileText, File, AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
 
-import type { Asset, AssetType } from '../../../../shared/types'
-import { useHover } from '../../hooks/useHover'
-import { useUIStore } from '../../stores/uiStore'
+import type { Asset, AssetType } from '@shared/types'
+
+import { useHover } from '@renderer/hooks/useHover'
+import { useUIStore } from '@renderer/stores/uiStore'
 
 import { AssetPreviewPopup } from './AssetPreviewPopup'
 

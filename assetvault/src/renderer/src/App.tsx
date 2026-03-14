@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { ImportProgress } from '../../shared/types'
+import type { ImportProgress } from '@shared/types'
 
 import { AssetDetail } from './components/asset/AssetDetail'
 import { MainGrid } from './components/asset/MainGrid'

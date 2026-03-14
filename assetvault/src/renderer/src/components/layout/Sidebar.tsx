@@ -1,8 +1,8 @@
 import { Tag, Trash2, Palette } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-import { useFilterStore } from '../../stores/filterStore'
-import { useTagStore } from '../../stores/tagStore'
+import { useFilterStore } from '@renderer/stores/filterStore'
+import { useTagStore } from '@renderer/stores/tagStore'
 
 const PRESET_COLORS = [
   { label: '빨강', hex: '#ef4444' },

@@ -27,7 +27,11 @@ export default defineConfig(
       'import-x': importX
     },
     settings: {
-      'import-x/resolver-next': [createTypeScriptImportResolver()]
+      'import-x/resolver-next': [
+        createTypeScriptImportResolver({
+          project: ['./tsconfig.web.json', './tsconfig.node.json']
+        })
+      ]
     },
     rules: {
       ...eslintPluginReactHooks.configs.recommended.rules,
@@ -38,6 +42,11 @@ export default defineConfig(
         'warn',
         {
           groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+          pathGroups: [
+            { pattern: '@shared/**', group: 'internal', position: 'before' },
+            { pattern: '@renderer/**', group: 'internal', position: 'before' }
+          ],
+          pathGroupsExcludedImportTypes: ['builtin', 'external'],
           'newlines-between': 'always',
           alphabetize: { order: 'asc', caseInsensitive: true }
         }
