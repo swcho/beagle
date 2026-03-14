@@ -58,6 +58,7 @@ export interface ElectronAPI {
   createTag: (name: string, color: string) => Promise<Tag>
   deleteTag: (id: string) => Promise<void>
   updateAssetTags: (assetId: string, tagIds: string[]) => Promise<void>
+  getTagAssetCounts: () => Promise<Record<string, number>>
   getFolders: () => Promise<Folder[]>
   createFolder: (name: string, parentId?: string) => Promise<Folder>
   openFolderDialog: () => Promise<string | null>

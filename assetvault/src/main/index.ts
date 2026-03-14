@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { initializeDatabase } from './db/schema'
 import { registerLibraryHandlers } from './ipc/library'
 import { registerThumbnailHandlers } from './ipc/thumbnail'
+import { registerTagHandlers } from './ipc/tags'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -24,6 +25,7 @@ function createWindow(): void {
 
   registerLibraryHandlers(mainWindow)
   registerThumbnailHandlers(mainWindow)
+  registerTagHandlers()
 
   mainWindow.on('ready-to-show', () => {
     mainWindow!.show()

@@ -182,3 +182,42 @@ export function deleteAssets(ids: string[]): void {
   const placeholders = ids.map(() => '?').join(', ')
   db.prepare(`DELETE FROM assets WHERE id IN (${placeholders})`).run(...ids)
 }
+
+// ── 태그 ────────────────────────────────────────────────────────────
+
+export function getTags(): Tag[] {
+  const db = getDatabase()
+  return db.prepare(`SELECT * FROM tags ORDER BY name`).all() as Tag[]
+}
+
+export function createTag(name: string, color: string): Tag {
+  const db = getDatabase()
+  const { v4: uuidv4 } = require('uuid')
+  const id = uuidv4()
+  db.prepare(`INSERT INTO tags (id, name, color) VALUES (?, ?, ?)`).run(id, name, color)
+  return { id, name, color }
+}
+
+export function deleteTag(id: string): void {
+  const db = getDatabase()
+  db.prepare(`DELETE FROM tags WHERE id = ?`).run(id)
+}
+
+export function updateAssetTags(assetId: string, tagIds: string[]): void {
+  const db = getDatabase()
+  const update = db.transaction(() => {
+    db.prepare(`DELETE FROM asset_tags WHERE asset_id = ?`).run(assetId)
+    for (const tagId of tagIds) {
+      db.prepare(`INSERT OR IGNORE INTO asset_tags (asset_id, tag_id) VALUES (?, ?)`).run(assetId, tagId)
+    }
+  })
+  update()
+}
+
+export function getTagAssetCounts(): Record<string, number> {
+  const db = getDatabase()
+  const rows = db.prepare(`
+    SELECT tag_id, COUNT(*) as cnt FROM asset_tags GROUP BY tag_id
+  `).all() as { tag_id: string; cnt: number }[]
+  return Object.fromEntries(rows.map((r) => [r.tag_id, r.cnt]))
+}

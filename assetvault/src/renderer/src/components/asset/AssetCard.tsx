@@ -47,7 +47,7 @@ function isFileThumbnail(path: string): boolean {
 }
 
 export function AssetCard({ asset }: AssetCardProps): React.JSX.Element {
-  const { selectedIds, toggleSelect } = useUIStore()
+  const { selectedIds, toggleSelect, setSelectedAssetId } = useUIStore()
   const { hoverState, hoverProps } = useHover(300)
   const isSelected = selectedIds.has(asset.id)
   const assetType = getAssetType(asset.ext)
@@ -58,7 +58,13 @@ export function AssetCard({ asset }: AssetCardProps): React.JSX.Element {
   return (
     <>
       <div
-        onClick={() => toggleSelect(asset.id)}
+        onClick={(e) => {
+          if (e.metaKey || e.ctrlKey) {
+            toggleSelect(asset.id)
+          } else {
+            setSelectedAssetId(asset.id)
+          }
+        }}
         {...hoverProps}
         className={`
           group relative flex flex-col bg-zinc-800 rounded-lg overflow-hidden cursor-pointer

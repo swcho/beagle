@@ -1,33 +1,35 @@
 import { useEffect, useState } from 'react'
 import { TopBar } from './components/layout/TopBar'
+import { Sidebar } from './components/layout/Sidebar'
 import { StatusBar } from './components/layout/StatusBar'
 import { MainGrid } from './components/asset/MainGrid'
+import { AssetDetail } from './components/asset/AssetDetail'
 import { useLibraryStore } from './stores/libraryStore'
 import { useFilterStore } from './stores/filterStore'
+import { useUIStore } from './stores/uiStore'
 import type { ImportProgress } from '../../shared/types'
 
 function App(): React.JSX.Element {
   const { assets, isLoading, fetchAssets, updateThumbnail } = useLibraryStore()
   const { query, types, tagIds, colors, sortBy, sortOrder } = useFilterStore()
+  const { selectedAssetId, setSelectedAssetId } = useUIStore()
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // filterStore 변경 시 fetchAssets 자동 호출
+  const selectedAsset = assets.find((a) => a.id === selectedAssetId) ?? null
+
   useEffect(() => {
     fetchAssets({ query, types, tagIds, colors, sortBy, sortOrder })
   }, [query, types, tagIds, colors, sortBy, sortOrder])
 
-  // IPC 이벤트 리스너 등록
   useEffect(() => {
     const onProgress = (...args: unknown[]): void => {
       setProgress(args[0] as ImportProgress)
     }
     const onThumbnail = (...args: unknown[]): void => {
       const { assetId, thumbnailPath, colors: c } = args[0] as {
-        assetId: string
-        thumbnailPath: string
-        colors: string[]
+        assetId: string; thumbnailPath: string; colors: string[]
       }
       updateThumbnail(assetId, thumbnailPath, c)
     }
@@ -46,8 +48,7 @@ function App(): React.JSX.Element {
       if (!folder) return
       setImporting(true)
       setProgress(null)
-      const result = await window.api.importFolder(folder)
-      console.log('Import result:', result)
+      await window.api.importFolder(folder)
       await fetchAssets({ query, types, tagIds, colors, sortBy, sortOrder })
     } catch (e) {
       setError(e instanceof Error ? e.message : '임포트 중 오류가 발생했습니다.')
@@ -57,6 +58,10 @@ function App(): React.JSX.Element {
     }
   }
 
+  async function handleAssetUpdate(): Promise<void> {
+    await fetchAssets({ query, types, tagIds, colors, sortBy, sortOrder })
+  }
+
   return (
     <div className="flex flex-col h-screen bg-zinc-900 text-white overflow-hidden">
       <TopBar progress={progress} importing={importing} onImport={handleImport} />
@@ -64,16 +69,21 @@ function App(): React.JSX.Element {
       {error && (
         <div className="mx-4 mt-3 px-4 py-2 bg-red-900/50 border border-red-700 rounded text-red-300 text-sm shrink-0">
           {error}
-          <button
-            className="ml-3 text-red-400 hover:text-red-200"
-            onClick={() => setError(null)}
-          >
-            ✕
-          </button>
+          <button className="ml-3 text-red-400 hover:text-red-200" onClick={() => setError(null)}>✕</button>
         </div>
       )}
 
-      <MainGrid assets={assets} isLoading={isLoading} onImport={handleImport} />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <MainGrid assets={assets} isLoading={isLoading} onImport={handleImport} />
+        {selectedAsset && (
+          <AssetDetail
+            asset={selectedAsset}
+            onClose={() => setSelectedAssetId(null)}
+            onAssetUpdate={handleAssetUpdate}
+          />
+        )}
+      </div>
 
       <StatusBar />
     </div>

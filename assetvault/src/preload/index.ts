@@ -15,6 +15,7 @@ const api: ElectronAPI = {
   deleteTag: (id: string) => ipcRenderer.invoke('delete-tag', id),
   updateAssetTags: (assetId: string, tagIds: string[]) =>
     ipcRenderer.invoke('update-asset-tags', assetId, tagIds),
+  getTagAssetCounts: () => ipcRenderer.invoke('get-tag-asset-counts'),
   getFolders: () => ipcRenderer.invoke('get-folders'),
   createFolder: (name: string, parentId?: string) =>
     ipcRenderer.invoke('create-folder', name, parentId),
