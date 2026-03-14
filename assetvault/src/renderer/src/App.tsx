@@ -1,3 +1,4 @@
+import { useDrag } from '@use-gesture/react'
 import { Layout, message } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -14,8 +15,12 @@ import { useFolderStore } from './stores/folderStore'
 import { useLibraryStore } from './stores/libraryStore'
 import { useUIStore } from './stores/uiStore'
 
+const SIDEBAR_MIN = 140
+const SIDEBAR_MAX = 400
+
 function App(): React.JSX.Element {
   const { assets, isLoading, fetchAssets, updateThumbnail } = useLibraryStore()
+  const [sidebarWidth, setSidebarWidth] = useState(208)
   const { fetchDirectories } = useFolderStore()
   const { query, types, tagIds, folderId, directory, colors, colorTolerance, sortBy, sortOrder } =
     useFilterStore()
@@ -85,9 +90,18 @@ function App(): React.JSX.Element {
       setImporting(false)
       setProgress(null)
     }
-  }, [currentFilter, fetchAssets, addToast])
+  }, [fetchAssets, currentFilter, fetchDirectories, addToast])
 
   useKeyboardShortcuts({ onImport: handleImport })
+
+  const bindResize = useDrag(
+    ({ delta: [dx], memo = sidebarWidth }) => {
+      const next = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, memo + dx))
+      setSidebarWidth(next)
+      return memo + dx
+    },
+    { axis: 'x' }
+  )
 
   async function handleAssetUpdate(): Promise<void> {
     await fetchAssets(currentFilter)
@@ -100,17 +114,34 @@ function App(): React.JSX.Element {
         <TopBar progress={progress} importing={importing} onImport={handleImport} />
       </Layout.Header>
 
-      <Layout style={{ overflow: 'hidden' }}>
-        <Layout.Sider
-          width={208}
+      <Layout style={{ overflow: 'hidden', flexDirection: 'row' }}>
+        <div
           style={{
+            width: sidebarWidth,
+            minWidth: sidebarWidth,
             background: '#27272a',
             borderRight: '1px solid #3f3f46',
-            overflow: 'auto'
+            overflow: 'auto',
+            position: 'relative',
+            flexShrink: 0
           }}
         >
           <Sidebar />
-        </Layout.Sider>
+          <div
+            {...bindResize()}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: 4,
+              height: '100%',
+              cursor: 'col-resize',
+              zIndex: 10,
+              touchAction: 'none'
+            }}
+            className="hover:bg-zinc-500/50 transition-colors"
+          />
+        </div>
 
         <Layout.Content style={{ overflow: 'hidden', display: 'flex' }}>
           <MainGrid assets={assets} isLoading={isLoading} onImport={handleImport} />
