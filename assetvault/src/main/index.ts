@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initializeDatabase } from './db/schema'
 import { registerLibraryHandlers } from './ipc/library'
+import { registerThumbnailHandlers } from './ipc/thumbnail'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -22,6 +23,7 @@ function createWindow(): void {
   })
 
   registerLibraryHandlers(mainWindow)
+  registerThumbnailHandlers(mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow!.show()

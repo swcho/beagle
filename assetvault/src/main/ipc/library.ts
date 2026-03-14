@@ -2,7 +2,12 @@ import { ipcMain, BrowserWindow, dialog } from 'electron'
 import { v4 as uuidv4 } from 'uuid'
 import { scanDirectory, type ScannedFile } from '../services/scanner'
 import { upsertAsset, getAssets, getAssetById, deleteAssets } from '../db/queries'
+import { generateThumbnail } from '../services/thumbnailer'
+import { extractColors } from '../services/colorExtract'
+import { updateAssetThumbnail } from '../db/queries'
 import type { AssetFilter } from '../../shared/types'
+
+const COLOR_EXTRACTABLE = new Set(['png', 'jpg', 'jpeg', 'webp', 'bmp'])
 
 export function registerLibraryHandlers(mainWindow: BrowserWindow): void {
   ipcMain.handle('import-folder', async (_event, folderPath: string) => {
@@ -42,6 +47,26 @@ export function registerLibraryHandlers(mainWindow: BrowserWindow): void {
         total,
         filename: file.name,
       })
+    }
+
+    // 임포트된 에셋들의 썸네일 자동 생성
+    const importedAssets = getAssets({ limit: imported + skipped })
+    for (const asset of importedAssets) {
+      try {
+        const thumbnailPath = await generateThumbnail(asset)
+        let colors: string[] = []
+        if (COLOR_EXTRACTABLE.has(asset.ext.toLowerCase())) {
+          colors = await extractColors(asset.path)
+        }
+        updateAssetThumbnail(asset.id, thumbnailPath, colors)
+        mainWindow.webContents.send('thumbnail-ready', {
+          assetId: asset.id,
+          thumbnailPath,
+          colors,
+        })
+      } catch (err) {
+        console.error(`썸네일 생성 실패 [${asset.name}]:`, err)
+      }
     }
 
     return { imported, skipped }

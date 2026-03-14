@@ -1,18 +1,38 @@
 import { useState, useEffect } from 'react'
 import type { Asset, ImportProgress } from '../../shared/types'
 
+interface ThumbnailReadyPayload {
+  assetId: string
+  thumbnailPath: string
+  colors: string[]
+}
+
+function isFilePath(p: string): boolean {
+  return !p.startsWith('__placeholder:')
+}
+
 function App(): React.JSX.Element {
   const [assets, setAssets] = useState<Asset[]>([])
+  const [thumbnails, setThumbnails] = useState<Map<string, ThumbnailReadyPayload>>(new Map())
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const handler = (...args: unknown[]): void => {
+    const onProgress = (...args: unknown[]): void => {
       setProgress(args[0] as ImportProgress)
     }
-    window.api.on('import-progress', handler)
-    return () => window.api.off('import-progress', handler)
+    const onThumbnail = (...args: unknown[]): void => {
+      const payload = args[0] as ThumbnailReadyPayload
+      console.log('thumbnail-ready:', payload.assetId, payload.thumbnailPath)
+      setThumbnails((prev) => new Map(prev).set(payload.assetId, payload))
+    }
+    window.api.on('import-progress', onProgress)
+    window.api.on('thumbnail-ready', onThumbnail)
+    return () => {
+      window.api.off('import-progress', onProgress)
+      window.api.off('thumbnail-ready', onThumbnail)
+    }
   }, [])
 
   async function handleImport(): Promise<void> {
@@ -23,11 +43,12 @@ function App(): React.JSX.Element {
 
       setImporting(true)
       setProgress(null)
+      setThumbnails(new Map())
+
       const result = await window.api.importFolder(folder)
       console.log('Import result:', result)
 
       const list = await window.api.getAssets({})
-      console.log('Assets:', list)
       setAssets(list)
     } catch (e) {
       setError(e instanceof Error ? e.message : '임포트 중 오류가 발생했습니다.')
@@ -67,19 +88,44 @@ function App(): React.JSX.Element {
             폴더를 임포트해서 시작하세요
           </p>
         ) : (
-          <div className="grid grid-cols-4 gap-3">
-            {assets.map((asset) => (
-              <div
-                key={asset.id}
-                className="bg-zinc-800 rounded-lg p-3 text-sm"
-              >
-                <div className="text-zinc-200 truncate font-medium">{asset.name}</div>
-                <div className="text-zinc-500 mt-1">.{asset.ext} · {(asset.size / 1024).toFixed(1)} KB</div>
-                {asset.width && (
-                  <div className="text-zinc-500">{asset.width}×{asset.height}</div>
-                )}
-              </div>
-            ))}
+          <div className="grid grid-cols-5 gap-3">
+            {assets.map((asset) => {
+              const thumb = thumbnails.get(asset.id)
+              const thumbPath = thumb?.thumbnailPath ?? asset.thumbnail
+              const colors = thumb?.colors ?? asset.colors
+
+              return (
+                <div key={asset.id} className="bg-zinc-800 rounded-lg overflow-hidden text-sm">
+                  <div className="w-full h-32 bg-zinc-700 flex items-center justify-center">
+                    {thumbPath && isFilePath(thumbPath) ? (
+                      <img
+                        src={`file://${thumbPath}`}
+                        alt={asset.name}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-zinc-500 text-xs uppercase">{asset.ext}</span>
+                    )}
+                  </div>
+                  <div className="p-2">
+                    <div className="text-zinc-200 truncate font-medium">{asset.name}</div>
+                    <div className="text-zinc-500 mt-1">.{asset.ext} · {(asset.size / 1024).toFixed(1)} KB</div>
+                    {colors.length > 0 && (
+                      <div className="flex gap-1 mt-2">
+                        {colors.map((c) => (
+                          <div
+                            key={c}
+                            className="w-4 h-4 rounded-full border border-zinc-600"
+                            style={{ backgroundColor: c }}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
