@@ -1,4 +1,4 @@
-import { Slider, Tag as AntTag, Dropdown } from 'antd'
+import { Col, Dropdown, Row, Slider, Tag as AntTag } from 'antd'
 import type { MenuProps } from 'antd'
 import { Tag, Trash2, Palette, Layers } from 'lucide-react'
 import { useEffect } from 'react'
@@ -76,7 +76,7 @@ export function Sidebar(): React.JSX.Element {
   }
 
   return (
-    <div className="w-52 flex flex-col bg-zinc-800 border-r border-zinc-700 shrink-0 overflow-y-auto">
+    <>
       {/* 타입 필터 섹션 */}
       <div className="px-3 py-3 border-b border-zinc-700">
         <div className="flex items-center gap-2 mb-2">
@@ -159,23 +159,24 @@ export function Sidebar(): React.JSX.Element {
           <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">색상</span>
         </div>
 
-        <div className="grid grid-cols-6 gap-1.5 mb-3">
+        <Row gutter={[6, 6]} style={{ marginBottom: 12 }}>
           {PRESET_COLORS.map(({ label, hex }) => {
             const isActive = colors.includes(hex)
             return (
-              <button
-                key={hex}
-                title={label}
-                onClick={() => toggleColorFilter(hex)}
-                className={`
-                  w-6 h-6 rounded-full border-2 transition-transform hover:scale-110
-                  ${isActive ? 'border-white scale-110' : 'border-zinc-600'}
-                `}
-                style={{ backgroundColor: hex }}
-              />
+              <Col key={hex} span={4}>
+                <button
+                  title={label}
+                  onClick={() => toggleColorFilter(hex)}
+                  className={`
+                    w-6 h-6 rounded-full border-2 transition-transform hover:scale-110
+                    ${isActive ? 'border-white scale-110' : 'border-zinc-600'}
+                  `}
+                  style={{ backgroundColor: hex }}
+                />
+              </Col>
             )
           })}
-        </div>
+        </Row>
 
         {/* 선택된 색상 칩 */}
         {colors.length > 0 && (
@@ -213,6 +214,6 @@ export function Sidebar(): React.JSX.Element {
           />
         </div>
       </div>
-    </div>
+    </>
   )
 }

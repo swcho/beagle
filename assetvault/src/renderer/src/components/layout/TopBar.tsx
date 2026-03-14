@@ -1,4 +1,4 @@
-import { Button, Input, Progress, Segmented, Select, Tag as AntTag, Tooltip } from 'antd'
+import { Button, Col, Input, Progress, Row, Segmented, Select, Tag as AntTag, Tooltip } from 'antd'
 import type { InputRef } from 'antd'
 import { FolderOpen, LayoutGrid, List, SortAsc, SortDesc } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -72,69 +72,85 @@ export function TopBar({ progress, importing, onImport }: TopBarProps): React.JS
   return (
     <div className="flex flex-col bg-zinc-800 border-b border-zinc-700 shrink-0">
       {/* 메인 툴바 */}
-      <div className="flex items-center gap-3 px-4 py-2.5">
-        <span className="text-sm font-semibold text-zinc-100 mr-1">AssetVault</span>
+      <Row gutter={8} align="middle" style={{ padding: '8px 16px' }} wrap={false}>
+        <Col flex="none">
+          <span className="text-sm font-semibold text-zinc-100">AssetVault</span>
+        </Col>
 
-        <Input
-          ref={searchInputRef}
-          value={localQuery}
-          onChange={handleQueryChange}
-          placeholder="검색... (⌘F)"
-          size="small"
-          allowClear
-          className="flex-1 max-w-sm"
-        />
-
-        <Select
-          value={sortBy}
-          onChange={(val) => setFilter({ sortBy: val as typeof sortBy })}
-          options={SORT_OPTIONS}
-          size="small"
-          style={{ width: 110 }}
-        />
-
-        <Tooltip title={sortOrder === 'asc' ? '오름차순' : '내림차순'}>
-          <Button
-            type="text"
+        <Col flex="1 1 0" style={{ maxWidth: 384, minWidth: 0 }}>
+          <Input
+            ref={searchInputRef}
+            value={localQuery}
+            onChange={handleQueryChange}
+            placeholder="검색... (⌘F)"
             size="small"
-            icon={sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
-            onClick={() => setFilter({ sortOrder: sortOrder === 'asc' ? 'desc' : 'asc' })}
+            allowClear
           />
-        </Tooltip>
+        </Col>
 
-        <Segmented
-          size="small"
-          value={viewMode}
-          onChange={(val) => setViewMode(val as 'grid' | 'list')}
-          options={[
-            { value: 'grid', label: <LayoutGrid size={14} /> },
-            { value: 'list', label: <List size={14} /> }
-          ]}
-        />
+        <Col flex="none">
+          <Select
+            value={sortBy}
+            onChange={(val) => setFilter({ sortBy: val as typeof sortBy })}
+            options={SORT_OPTIONS}
+            size="small"
+            style={{ width: 110 }}
+          />
+        </Col>
 
-        <Button
-          type="primary"
-          size="small"
-          icon={<FolderOpen size={15} />}
-          onClick={onImport}
-          loading={importing}
-        >
-          {importing ? '임포트 중...' : '임포트'}
-        </Button>
+        <Col flex="none">
+          <Tooltip title={sortOrder === 'asc' ? '오름차순' : '내림차순'}>
+            <Button
+              type="text"
+              size="small"
+              icon={sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
+              onClick={() => setFilter({ sortOrder: sortOrder === 'asc' ? 'desc' : 'asc' })}
+            />
+          </Tooltip>
+        </Col>
+
+        <Col flex="none">
+          <Segmented
+            size="small"
+            value={viewMode}
+            onChange={(val) => setViewMode(val as 'grid' | 'list')}
+            options={[
+              { value: 'grid', label: <LayoutGrid size={14} /> },
+              { value: 'list', label: <List size={14} /> }
+            ]}
+          />
+        </Col>
+
+        <Col flex="none">
+          <Button
+            type="primary"
+            size="small"
+            icon={<FolderOpen size={15} />}
+            onClick={onImport}
+            loading={importing}
+          >
+            {importing ? '임포트 중...' : '임포트'}
+          </Button>
+        </Col>
 
         {progress && (
-          <div className="flex items-center gap-2 min-w-0 flex-1 max-w-52">
-            <Progress
-              percent={Math.round((progress.current / progress.total) * 100)}
-              size="small"
-              status="active"
-              showInfo={false}
-              className="flex-1"
-            />
-            <span className="text-xs text-zinc-400 truncate shrink-0">{progress.filename}</span>
-          </div>
+          <Col flex="1 1 0" style={{ maxWidth: 208, minWidth: 0 }}>
+            <Row gutter={8} align="middle" wrap={false}>
+              <Col flex="1 1 0">
+                <Progress
+                  percent={Math.round((progress.current / progress.total) * 100)}
+                  size="small"
+                  status="active"
+                  showInfo={false}
+                />
+              </Col>
+              <Col flex="none">
+                <span className="text-xs text-zinc-400 truncate">{progress.filename}</span>
+              </Col>
+            </Row>
+          </Col>
         )}
-      </div>
+      </Row>
 
       {/* 활성 필터 칩 */}
       {hasActiveFilters && (

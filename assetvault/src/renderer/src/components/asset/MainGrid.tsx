@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Button, Empty, Spin } from 'antd'
+import { Button, Col, Empty, Row, Spin } from 'antd'
 import { FolderOpen, SearchX } from 'lucide-react'
 import { useRef, useEffect, useMemo } from 'react'
 
@@ -95,23 +95,24 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
       <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const row = rows[virtualRow.index]
+          const colFlex = `0 0 calc(100% / ${gridColumns})`
           return (
             <div
               key={virtualRow.key}
-              style={{
-                position: 'absolute',
-                top: virtualRow.start,
-                left: 0,
-                right: 0,
-                display: 'grid',
-                gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))`,
-                gap: '8px',
-                paddingBottom: '8px'
-              }}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              style={{ position: 'absolute', top: virtualRow.start, left: 0, right: 0 }}
             >
-              {row.map((asset) => (
-                <AssetCard key={asset.id} asset={asset} />
-              ))}
+              <Row gutter={[8, 0]} style={{ paddingBottom: 8 }}>
+                {row.map((asset) => (
+                  <Col
+                    key={asset.id}
+                    style={{ flex: colFlex, maxWidth: `calc(100% / ${gridColumns})` }}
+                  >
+                    <AssetCard asset={asset} />
+                  </Col>
+                ))}
+              </Row>
             </div>
           )
         })}

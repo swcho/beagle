@@ -1,4 +1,4 @@
-import { message } from 'antd'
+import { Layout, message } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { ImportProgress } from '@shared/types'
@@ -91,24 +91,40 @@ function App(): React.JSX.Element {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-900 text-white overflow-hidden">
+    <Layout style={{ height: '100vh', overflow: 'hidden' }}>
       {contextHolder}
-      <TopBar progress={progress} importing={importing} onImport={handleImport} />
+      <Layout.Header style={{ padding: 0, height: 'auto', lineHeight: 'normal' }}>
+        <TopBar progress={progress} importing={importing} onImport={handleImport} />
+      </Layout.Header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <MainGrid assets={assets} isLoading={isLoading} onImport={handleImport} />
-        {selectedAsset && (
-          <AssetDetail
-            asset={selectedAsset}
-            onClose={() => setSelectedAssetId(null)}
-            onAssetUpdate={handleAssetUpdate}
-          />
-        )}
-      </div>
+      <Layout style={{ overflow: 'hidden' }}>
+        <Layout.Sider
+          width={208}
+          style={{
+            background: '#27272a',
+            borderRight: '1px solid #3f3f46',
+            overflow: 'auto'
+          }}
+        >
+          <Sidebar />
+        </Layout.Sider>
 
-      <StatusBar />
-    </div>
+        <Layout.Content style={{ overflow: 'hidden', display: 'flex' }}>
+          <MainGrid assets={assets} isLoading={isLoading} onImport={handleImport} />
+          {selectedAsset && (
+            <AssetDetail
+              asset={selectedAsset}
+              onClose={() => setSelectedAssetId(null)}
+              onAssetUpdate={handleAssetUpdate}
+            />
+          )}
+        </Layout.Content>
+      </Layout>
+
+      <Layout.Footer style={{ padding: 0 }}>
+        <StatusBar />
+      </Layout.Footer>
+    </Layout>
   )
 }
 
