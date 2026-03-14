@@ -1,10 +1,21 @@
 import { Slider, Tag as AntTag, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
-import { Tag, Trash2, Palette } from 'lucide-react'
+import { Tag, Trash2, Palette, Layers } from 'lucide-react'
 import { useEffect } from 'react'
+
+import type { AssetType } from '@shared/types'
 
 import { useFilterStore } from '@renderer/stores/filterStore'
 import { useTagStore } from '@renderer/stores/tagStore'
+
+const ASSET_TYPES: { type: AssetType; label: string; className: string }[] = [
+  { type: 'image', label: 'IMG', className: 'bg-blue-900 text-blue-300' },
+  { type: 'audio', label: 'SND', className: 'bg-green-900 text-green-300' },
+  { type: 'video', label: 'VID', className: 'bg-purple-900 text-purple-300' },
+  { type: 'font', label: 'FONT', className: 'bg-yellow-900 text-yellow-300' },
+  { type: 'model3d', label: '3D', className: 'bg-orange-900 text-orange-300' },
+  { type: 'doc', label: 'DOC', className: 'bg-red-900 text-red-300' }
+]
 
 const PRESET_COLORS = [
   { label: '빨강', hex: '#ef4444' },
@@ -22,7 +33,12 @@ const PRESET_COLORS = [
 
 export function Sidebar(): React.JSX.Element {
   const { tags, tagCounts, fetchTags, deleteTag } = useTagStore()
-  const { tagIds, colors, colorTolerance, setFilter } = useFilterStore()
+  const { types, tagIds, colors, colorTolerance, setFilter } = useFilterStore()
+
+  function toggleTypeFilter(type: AssetType): void {
+    const next = types.includes(type) ? types.filter((t) => t !== type) : [...types, type]
+    setFilter({ types: next })
+  }
 
   useEffect(() => {
     fetchTags()
@@ -61,6 +77,32 @@ export function Sidebar(): React.JSX.Element {
 
   return (
     <div className="w-52 flex flex-col bg-zinc-800 border-r border-zinc-700 shrink-0 overflow-y-auto">
+      {/* 타입 필터 섹션 */}
+      <div className="px-3 py-3 border-b border-zinc-700">
+        <div className="flex items-center gap-2 mb-2">
+          <Layers size={13} className="text-zinc-500" />
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">타입</span>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {ASSET_TYPES.map(({ type, label, className }) => {
+            const isActive = types.includes(type)
+            return (
+              <button
+                key={type}
+                onClick={() => toggleTypeFilter(type)}
+                className={`
+                  text-[10px] font-bold px-1.5 py-0.5 rounded transition-opacity
+                  ${className}
+                  ${isActive ? 'opacity-100 ring-1 ring-white/40' : 'opacity-40 hover:opacity-70'}
+                `}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* 태그 섹션 */}
       <div className="px-3 py-3 border-b border-zinc-700">
         <div className="flex items-center gap-2 mb-2">
@@ -127,7 +169,7 @@ export function Sidebar(): React.JSX.Element {
                 onClick={() => toggleColorFilter(hex)}
                 className={`
                   w-6 h-6 rounded-full border-2 transition-transform hover:scale-110
-                  ${isActive ? 'border-white scale-110' : 'border-transparent border-zinc-600'}
+                  ${isActive ? 'border-white scale-110' : 'border-zinc-600'}
                 `}
                 style={{ backgroundColor: hex }}
               />
