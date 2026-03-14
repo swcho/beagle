@@ -1,12 +1,14 @@
-import { Col, Dropdown, Row, Slider, Tag as AntTag } from 'antd'
+import { Col, Dropdown, Input, Row, Slider, Tag as AntTag } from 'antd'
 import type { MenuProps } from 'antd'
-import { Tag, Trash2, Palette, Layers } from 'lucide-react'
-import { useEffect } from 'react'
+import { Tag, Trash2, Palette, Layers, FolderOpen, Folder as FolderIcon, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
-import type { AssetType } from '@shared/types'
+import type { AssetType, Folder } from '@shared/types'
 
 import { useFilterStore } from '@renderer/stores/filterStore'
+import { useFolderStore } from '@renderer/stores/folderStore'
 import { useTagStore } from '@renderer/stores/tagStore'
+import { useUIStore } from '@renderer/stores/uiStore'
 
 const ASSET_TYPES: { type: AssetType; label: string; className: string }[] = [
   { type: 'image', label: 'IMG', className: 'bg-blue-900 text-blue-300' },
@@ -31,9 +33,121 @@ const PRESET_COLORS = [
   { label: '검정', hex: '#18181b' }
 ]
 
+function FolderTree({ folders }: { folders: Folder[] }): React.JSX.Element {
+  const { selectedFolderId, folderCounts, deleteFolder, renameFolder, selectFolder } =
+    useFolderStore()
+  const { setFilter } = useFilterStore()
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+
+  function handleSelect(id: string | null): void {
+    selectFolder(id)
+    setFilter({ folderId: id ?? undefined })
+  }
+
+  function startRename(folder: Folder): void {
+    setRenamingId(folder.id)
+    setRenameValue(folder.name)
+  }
+
+  async function commitRename(): Promise<void> {
+    if (!renamingId || !renameValue.trim()) {
+      setRenamingId(null)
+      return
+    }
+    await renameFolder(renamingId, renameValue.trim())
+    setRenamingId(null)
+  }
+
+  function getFolderMenu(folder: Folder): MenuProps {
+    return {
+      items: [
+        {
+          key: 'rename',
+          label: '이름 변경',
+          icon: <FolderIcon size={12} />,
+          onClick: () => startRename(folder)
+        },
+        {
+          key: 'delete',
+          label: '폴더 삭제',
+          icon: <Trash2 size={12} />,
+          danger: true,
+          onClick: () => deleteFolder(folder.id)
+        }
+      ]
+    }
+  }
+
+  const isAllActive = selectedFolderId === null
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      {/* All Assets */}
+      <div
+        className={`
+          flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors
+          ${isAllActive ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'}
+        `}
+        onClick={() => handleSelect(null)}
+      >
+        <FolderOpen size={13} className="shrink-0" />
+        <span className="text-xs flex-1 truncate">전체 에셋</span>
+      </div>
+
+      {/* Folder list */}
+      {folders.map((folder) => {
+        const isActive = selectedFolderId === folder.id
+        const count = folderCounts[folder.id] ?? 0
+
+        return (
+          <Dropdown key={folder.id} menu={getFolderMenu(folder)} trigger={['contextMenu']}>
+            <div
+              className={`
+                group flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors
+                ${isActive ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'}
+              `}
+              onClick={() => handleSelect(folder.id)}
+            >
+              <span className="text-sm shrink-0">{folder.icon}</span>
+              {renamingId === folder.id ? (
+                <Input
+                  size="small"
+                  value={renameValue}
+                  autoFocus
+                  className="h-5 text-xs px-1 py-0 bg-zinc-600 border-zinc-500 text-zinc-100"
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={commitRename}
+                  onPressEnter={commitRename}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setRenamingId(null)
+                    e.stopPropagation()
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <span className="text-xs flex-1 truncate">{folder.name}</span>
+              )}
+              {count > 0 && renamingId !== folder.id && (
+                <span className="text-[10px] text-zinc-500 bg-zinc-700 px-1.5 py-0.5 rounded-full shrink-0">
+                  {count}
+                </span>
+              )}
+            </div>
+          </Dropdown>
+        )
+      })}
+    </div>
+  )
+}
+
 export function Sidebar(): React.JSX.Element {
   const { tags, tagCounts, fetchTags, deleteTag } = useTagStore()
   const { types, tagIds, colors, colorTolerance, setFilter } = useFilterStore()
+  const { folders, fetchFolders, createFolder } = useFolderStore()
+  const { selectedIds } = useUIStore()
+  const [creatingFolder, setCreatingFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
 
   function toggleTypeFilter(type: AssetType): void {
     const next = types.includes(type) ? types.filter((t) => t !== type) : [...types, type]
@@ -42,7 +156,8 @@ export function Sidebar(): React.JSX.Element {
 
   useEffect(() => {
     fetchTags()
-  }, [fetchTags])
+    fetchFolders()
+  }, [fetchTags, fetchFolders])
 
   function toggleTagFilter(tagId: string): void {
     const next = tagIds.includes(tagId) ? tagIds.filter((id) => id !== tagId) : [...tagIds, tagId]
@@ -75,8 +190,58 @@ export function Sidebar(): React.JSX.Element {
     }
   }
 
+  async function commitNewFolder(): Promise<void> {
+    const name = newFolderName.trim()
+    if (name) await createFolder(name)
+    setCreatingFolder(false)
+    setNewFolderName('')
+  }
+
   return (
     <>
+      {/* 라이브러리 (폴더) 섹션 */}
+      <div className="px-3 py-3 border-b border-zinc-700">
+        <div className="flex items-center gap-2 mb-2">
+          <FolderIcon size={13} className="text-zinc-500" />
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex-1">
+            라이브러리
+          </span>
+          {selectedIds.size > 0 && (
+            <span className="text-[10px] text-zinc-500">{selectedIds.size}개 선택됨</span>
+          )}
+          <button
+            title="새 폴더"
+            onClick={() => setCreatingFolder(true)}
+            className="text-zinc-500 hover:text-zinc-200 transition-colors"
+          >
+            <Plus size={13} />
+          </button>
+        </div>
+
+        <FolderTree folders={folders} />
+
+        {creatingFolder && (
+          <div className="mt-1">
+            <Input
+              size="small"
+              placeholder="폴더 이름"
+              value={newFolderName}
+              autoFocus
+              className="text-xs"
+              onChange={(e) => setNewFolderName(e.target.value)}
+              onBlur={commitNewFolder}
+              onPressEnter={commitNewFolder}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setCreatingFolder(false)
+                  setNewFolderName('')
+                }
+              }}
+            />
+          </div>
+        )}
+      </div>
+
       {/* 타입 필터 섹션 */}
       <div className="px-3 py-3 border-b border-zinc-700">
         <div className="flex items-center gap-2 mb-2">

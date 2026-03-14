@@ -15,7 +15,8 @@ import { useUIStore } from './stores/uiStore'
 
 function App(): React.JSX.Element {
   const { assets, isLoading, fetchAssets, updateThumbnail } = useLibraryStore()
-  const { query, types, tagIds, colors, colorTolerance, sortBy, sortOrder } = useFilterStore()
+  const { query, types, tagIds, folderId, colors, colorTolerance, sortBy, sortOrder } =
+    useFilterStore()
   const { selectedAssetId, setSelectedAssetId } = useUIStore()
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [importing, setImporting] = useState(false)
@@ -23,8 +24,8 @@ function App(): React.JSX.Element {
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) ?? null
   const currentFilter = useMemo(
-    () => ({ query, types, tagIds, colors, colorTolerance, sortBy, sortOrder }),
-    [query, types, tagIds, colors, colorTolerance, sortBy, sortOrder]
+    () => ({ query, types, tagIds, folderId, colors, colorTolerance, sortBy, sortOrder }),
+    [query, types, tagIds, folderId, colors, colorTolerance, sortBy, sortOrder]
   )
 
   const addToast = useCallback(

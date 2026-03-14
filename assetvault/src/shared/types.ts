@@ -63,6 +63,11 @@ export interface ElectronAPI {
   getTagAssetCounts: () => Promise<Record<string, number>>
   getFolders: () => Promise<Folder[]>
   createFolder: (name: string, parentId?: string) => Promise<Folder>
+  deleteFolder: (id: string) => Promise<void>
+  renameFolder: (id: string, name: string) => Promise<void>
+  addAssetsToFolder: (folderId: string, assetIds: string[]) => Promise<void>
+  removeAssetsFromFolder: (folderId: string, assetIds: string[]) => Promise<void>
+  getFolderAssetCounts: () => Promise<Record<string, number>>
   openFolderDialog: () => Promise<string | null>
   showInFinder: (path: string) => Promise<void>
   on: (channel: string, cb: (...args: unknown[]) => void) => void

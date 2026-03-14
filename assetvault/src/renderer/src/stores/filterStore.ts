@@ -6,6 +6,7 @@ interface FilterState {
   query: string
   types: AssetType[]
   tagIds: string[]
+  folderId: string | undefined
   colors: string[]
   colorTolerance: number
   sortBy: 'name' | 'size' | 'createdAt' | 'importedAt'
@@ -18,6 +19,7 @@ const defaultFilter = {
   query: '',
   types: [] as AssetType[],
   tagIds: [] as string[],
+  folderId: undefined as string | undefined,
   colors: [] as string[],
   colorTolerance: 0.25,
   sortBy: 'importedAt' as const,

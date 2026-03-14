@@ -21,6 +21,13 @@ const api: ElectronAPI = {
   getFolders: () => ipcRenderer.invoke('get-folders'),
   createFolder: (name: string, parentId?: string) =>
     ipcRenderer.invoke('create-folder', name, parentId),
+  deleteFolder: (id: string) => ipcRenderer.invoke('delete-folder', id),
+  renameFolder: (id: string, name: string) => ipcRenderer.invoke('rename-folder', id, name),
+  addAssetsToFolder: (folderId: string, assetIds: string[]) =>
+    ipcRenderer.invoke('add-assets-to-folder', folderId, assetIds),
+  removeAssetsFromFolder: (folderId: string, assetIds: string[]) =>
+    ipcRenderer.invoke('remove-assets-from-folder', folderId, assetIds),
+  getFolderAssetCounts: () => ipcRenderer.invoke('get-folder-asset-counts'),
   openFolderDialog: () => ipcRenderer.invoke('open-folder-dialog'),
   showInFinder: (path: string) => ipcRenderer.invoke('show-in-finder', path),
   on: (channel: string, cb: (...args: unknown[]) => void) => {

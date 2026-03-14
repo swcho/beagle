@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 
 import { SUPPORTED_FORMATS } from '../../shared/types'
-import type { Asset, AssetFilter, Tag } from '../../shared/types'
+import type { Asset, AssetFilter, Folder, Tag } from '../../shared/types'
 
 import { getDatabase } from './schema'
 
@@ -342,6 +342,72 @@ export function searchByColor(hex: string, tolerance: number): Asset[] {
       }
     })
   )
+}
+
+// ── 폴더 ────────────────────────────────────────────────────────────
+
+export function getFolders(): Folder[] {
+  const db = getDatabase()
+  const rows = db
+    .prepare(
+      `SELECT id, name, parent_id as parentId, icon, sort_order as sortOrder FROM folders ORDER BY sort_order, name`
+    )
+    .all() as Folder[]
+  return rows
+}
+
+export function createFolder(name: string, parentId?: string): Folder {
+  const db = getDatabase()
+  const id = uuidv4()
+  const maxOrder = (
+    db
+      .prepare(
+        `SELECT COALESCE(MAX(sort_order), -1) as m FROM folders WHERE parent_id IS @parentId`
+      )
+      .get({ parentId: parentId ?? null }) as { m: number }
+  ).m
+  db.prepare(
+    `INSERT INTO folders (id, name, parent_id, icon, sort_order) VALUES (?, ?, ?, ?, ?)`
+  ).run(id, name, parentId ?? null, '📁', maxOrder + 1)
+  return { id, name, parentId, icon: '📁', sortOrder: maxOrder + 1 }
+}
+
+export function deleteFolder(id: string): void {
+  const db = getDatabase()
+  db.prepare(`DELETE FROM folders WHERE id = ?`).run(id)
+}
+
+export function renameFolder(id: string, name: string): void {
+  const db = getDatabase()
+  db.prepare(`UPDATE folders SET name = ? WHERE id = ?`).run(name, id)
+}
+
+export function addAssetsToFolder(folderId: string, assetIds: string[]): void {
+  const db = getDatabase()
+  const insert = db.prepare(
+    `INSERT OR IGNORE INTO folder_assets (folder_id, asset_id) VALUES (?, ?)`
+  )
+  const insertMany = db.transaction((ids: string[]) => {
+    for (const assetId of ids) insert.run(folderId, assetId)
+  })
+  insertMany(assetIds)
+}
+
+export function removeAssetsFromFolder(folderId: string, assetIds: string[]): void {
+  const db = getDatabase()
+  const del = db.prepare(`DELETE FROM folder_assets WHERE folder_id = ? AND asset_id = ?`)
+  const deleteMany = db.transaction((ids: string[]) => {
+    for (const assetId of ids) del.run(folderId, assetId)
+  })
+  deleteMany(assetIds)
+}
+
+export function getFolderAssetCounts(): Record<string, number> {
+  const db = getDatabase()
+  const rows = db
+    .prepare(`SELECT folder_id, COUNT(*) as cnt FROM folder_assets GROUP BY folder_id`)
+    .all() as { folder_id: string; cnt: number }[]
+  return Object.fromEntries(rows.map((r) => [r.folder_id, r.cnt]))
 }
 
 export function getTagAssetCounts(): Record<string, number> {
