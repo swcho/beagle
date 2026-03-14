@@ -7,6 +7,7 @@ interface FilterState {
   types: AssetType[]
   tagIds: string[]
   folderId: string | undefined
+  directory: string | undefined
   colors: string[]
   colorTolerance: number
   sortBy: 'name' | 'size' | 'createdAt' | 'importedAt'
@@ -20,6 +21,7 @@ const defaultFilter = {
   types: [] as AssetType[],
   tagIds: [] as string[],
   folderId: undefined as string | undefined,
+  directory: undefined as string | undefined,
   colors: [] as string[],
   colorTolerance: 0.25,
   sortBy: 'importedAt' as const,

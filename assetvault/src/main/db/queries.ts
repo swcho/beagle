@@ -135,6 +135,11 @@ export function getAssets(filter: AssetFilter & { _ids?: string[] }): Asset[] {
     params.folderId = filter.folderId
   }
 
+  if (filter.directory) {
+    conditions.push(`a.path LIKE @directoryPrefix`)
+    params.directoryPrefix = filter.directory + '/%'
+  }
+
   if (filter.tagIds && filter.tagIds.length > 0) {
     const placeholders = filter.tagIds.map((_, i) => `@tagId${i}`).join(', ')
     filter.tagIds.forEach((id, i) => {
@@ -408,6 +413,12 @@ export function getFolderAssetCounts(): Record<string, number> {
     .prepare(`SELECT folder_id, COUNT(*) as cnt FROM folder_assets GROUP BY folder_id`)
     .all() as { folder_id: string; cnt: number }[]
   return Object.fromEntries(rows.map((r) => [r.folder_id, r.cnt]))
+}
+
+export function getAssetPaths(): string[] {
+  const db = getDatabase()
+  const rows = db.prepare(`SELECT path FROM assets`).all() as { path: string }[]
+  return rows.map((r) => r.path)
 }
 
 export function getTagAssetCounts(): Record<string, number> {

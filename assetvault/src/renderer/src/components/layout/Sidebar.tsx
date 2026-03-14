@@ -1,9 +1,20 @@
 import { Col, Dropdown, Input, Row, Slider, Tag as AntTag } from 'antd'
 import type { MenuProps } from 'antd'
-import { Tag, Trash2, Palette, Layers, FolderOpen, Folder as FolderIcon, Plus } from 'lucide-react'
+import {
+  Tag,
+  Trash2,
+  Palette,
+  Layers,
+  FolderOpen,
+  Folder as FolderIcon,
+  Plus,
+  HardDrive,
+  ChevronRight,
+  ChevronDown
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import type { AssetType, Folder } from '@shared/types'
+import type { AssetType, DirectoryNode, Folder } from '@shared/types'
 
 import { useFilterStore } from '@renderer/stores/filterStore'
 import { useFolderStore } from '@renderer/stores/folderStore'
@@ -32,6 +43,62 @@ const PRESET_COLORS = [
   { label: '회색', hex: '#71717a' },
   { label: '검정', hex: '#18181b' }
 ]
+
+function DirNode({
+  node,
+  depth,
+  selectedDirectory,
+  onSelect
+}: {
+  node: DirectoryNode
+  depth: number
+  selectedDirectory: string | undefined
+  onSelect: (path: string | undefined) => void
+}): React.JSX.Element {
+  const [expanded, setExpanded] = useState(depth === 0)
+  const isActive = selectedDirectory === node.path
+  const hasChildren = node.children.length > 0
+
+  return (
+    <div>
+      <div
+        className={`
+          flex items-center gap-1 px-2 py-1 rounded cursor-pointer transition-colors text-xs
+          ${isActive ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'}
+        `}
+        style={{ paddingLeft: `${8 + depth * 12}px` }}
+        onClick={() => onSelect(isActive ? undefined : node.path)}
+      >
+        {hasChildren ? (
+          <button
+            className="shrink-0 text-zinc-500 hover:text-zinc-300"
+            onClick={(e) => {
+              e.stopPropagation()
+              setExpanded((v) => !v)
+            }}
+          >
+            {expanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+          </button>
+        ) : (
+          <span className="w-3 shrink-0" />
+        )}
+        <FolderIcon size={12} className="shrink-0 text-zinc-500" />
+        <span className="flex-1 truncate">{node.name}</span>
+        <span className="text-[10px] text-zinc-600 shrink-0">{node.count}</span>
+      </div>
+      {expanded &&
+        node.children.map((child) => (
+          <DirNode
+            key={child.path}
+            node={child}
+            depth={depth + 1}
+            selectedDirectory={selectedDirectory}
+            onSelect={onSelect}
+          />
+        ))}
+    </div>
+  )
+}
 
 function FolderTree({ folders }: { folders: Folder[] }): React.JSX.Element {
   const { selectedFolderId, folderCounts, deleteFolder, renameFolder, selectFolder } =
@@ -143,8 +210,8 @@ function FolderTree({ folders }: { folders: Folder[] }): React.JSX.Element {
 
 export function Sidebar(): React.JSX.Element {
   const { tags, tagCounts, fetchTags, deleteTag } = useTagStore()
-  const { types, tagIds, colors, colorTolerance, setFilter } = useFilterStore()
-  const { folders, fetchFolders, createFolder } = useFolderStore()
+  const { types, tagIds, directory, colors, colorTolerance, setFilter } = useFilterStore()
+  const { folders, fetchFolders, createFolder, directoryTree, fetchDirectories } = useFolderStore()
   const { selectedIds } = useUIStore()
   const [creatingFolder, setCreatingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
@@ -157,7 +224,8 @@ export function Sidebar(): React.JSX.Element {
   useEffect(() => {
     fetchTags()
     fetchFolders()
-  }, [fetchTags, fetchFolders])
+    fetchDirectories()
+  }, [fetchTags, fetchFolders, fetchDirectories])
 
   function toggleTagFilter(tagId: string): void {
     const next = tagIds.includes(tagId) ? tagIds.filter((id) => id !== tagId) : [...tagIds, tagId]
@@ -241,6 +309,37 @@ export function Sidebar(): React.JSX.Element {
           </div>
         )}
       </div>
+
+      {/* 파일 시스템 섹션 */}
+      {directoryTree.length > 0 && (
+        <div className="px-3 py-3 border-b border-zinc-700">
+          <div className="flex items-center gap-2 mb-2">
+            <HardDrive size={13} className="text-zinc-500" />
+            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex-1">
+              파일 시스템
+            </span>
+            {directory && (
+              <button
+                className="text-[10px] text-zinc-500 hover:text-zinc-300"
+                onClick={() => setFilter({ directory: undefined })}
+              >
+                해제
+              </button>
+            )}
+          </div>
+          <div className="flex flex-col gap-0.5">
+            {directoryTree.map((node) => (
+              <DirNode
+                key={node.path}
+                node={node}
+                depth={0}
+                selectedDirectory={directory}
+                onSelect={(path) => setFilter({ directory: path })}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 타입 필터 섹션 */}
       <div className="px-3 py-3 border-b border-zinc-700">

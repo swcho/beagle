@@ -28,11 +28,19 @@ export interface Folder {
   sortOrder: number
 }
 
+export interface DirectoryNode {
+  path: string
+  name: string
+  children: DirectoryNode[]
+  count: number
+}
+
 export interface AssetFilter {
   query?: string
   types?: AssetType[]
   tagIds?: string[]
   folderId?: string
+  directory?: string
   colors?: string[]
   colorTolerance?: number
   sortBy?: 'name' | 'size' | 'createdAt' | 'importedAt'
@@ -61,6 +69,7 @@ export interface ElectronAPI {
   deleteTag: (id: string) => Promise<void>
   updateAssetTags: (assetId: string, tagIds: string[]) => Promise<void>
   getTagAssetCounts: () => Promise<Record<string, number>>
+  getAssetDirectories: () => Promise<DirectoryNode[]>
   getFolders: () => Promise<Folder[]>
   createFolder: (name: string, parentId?: string) => Promise<Folder>
   deleteFolder: (id: string) => Promise<void>

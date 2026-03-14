@@ -1,12 +1,14 @@
 import { create } from 'zustand'
 
-import type { Folder } from '@shared/types'
+import type { DirectoryNode, Folder } from '@shared/types'
 
 interface FolderStore {
   folders: Folder[]
   folderCounts: Record<string, number>
   selectedFolderId: string | null
+  directoryTree: DirectoryNode[]
   fetchFolders: () => Promise<void>
+  fetchDirectories: () => Promise<void>
   createFolder: (name: string, parentId?: string) => Promise<Folder>
   deleteFolder: (id: string) => Promise<void>
   renameFolder: (id: string, name: string) => Promise<void>
@@ -19,6 +21,7 @@ export const useFolderStore = create<FolderStore>((set, get) => ({
   folders: [],
   folderCounts: {},
   selectedFolderId: null,
+  directoryTree: [],
 
   fetchFolders: async () => {
     const [folders, folderCounts] = await Promise.all([
@@ -26,6 +29,11 @@ export const useFolderStore = create<FolderStore>((set, get) => ({
       window.api.getFolderAssetCounts()
     ])
     set({ folders, folderCounts })
+  },
+
+  fetchDirectories: async () => {
+    const directoryTree = await window.api.getAssetDirectories()
+    set({ directoryTree })
   },
 
   createFolder: async (name, parentId) => {

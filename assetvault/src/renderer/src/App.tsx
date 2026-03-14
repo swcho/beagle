@@ -10,12 +10,14 @@ import { StatusBar } from './components/layout/StatusBar'
 import { TopBar } from './components/layout/TopBar'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useFilterStore } from './stores/filterStore'
+import { useFolderStore } from './stores/folderStore'
 import { useLibraryStore } from './stores/libraryStore'
 import { useUIStore } from './stores/uiStore'
 
 function App(): React.JSX.Element {
   const { assets, isLoading, fetchAssets, updateThumbnail } = useLibraryStore()
-  const { query, types, tagIds, folderId, colors, colorTolerance, sortBy, sortOrder } =
+  const { fetchDirectories } = useFolderStore()
+  const { query, types, tagIds, folderId, directory, colors, colorTolerance, sortBy, sortOrder } =
     useFilterStore()
   const { selectedAssetId, setSelectedAssetId } = useUIStore()
   const [progress, setProgress] = useState<ImportProgress | null>(null)
@@ -24,8 +26,8 @@ function App(): React.JSX.Element {
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) ?? null
   const currentFilter = useMemo(
-    () => ({ query, types, tagIds, folderId, colors, colorTolerance, sortBy, sortOrder }),
-    [query, types, tagIds, folderId, colors, colorTolerance, sortBy, sortOrder]
+    () => ({ query, types, tagIds, folderId, directory, colors, colorTolerance, sortBy, sortOrder }),
+    [query, types, tagIds, folderId, directory, colors, colorTolerance, sortBy, sortOrder]
   )
 
   const addToast = useCallback(
@@ -72,7 +74,7 @@ function App(): React.JSX.Element {
       setImporting(true)
       setProgress(null)
       const result = await window.api.importFolder(folder)
-      await fetchAssets(currentFilter)
+      await Promise.all([fetchAssets(currentFilter), fetchDirectories()])
       addToast(
         'success',
         `${result.imported}개 임포트 완료${result.skipped ? ` (${result.skipped}개 건너뜀)` : ''}`
