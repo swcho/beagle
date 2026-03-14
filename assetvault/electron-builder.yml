@@ -1,5 +1,5 @@
-appId: com.assetvault.app
-productName: AssetVault
+appId: com.beagle.app
+productName: Beagle
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: assetvault
+  executableName: beagle
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
