@@ -44,6 +44,16 @@ const PRESET_COLORS = [
   { label: '검정', hex: '#18181b' }
 ]
 
+function compactChain(node: DirectoryNode): { label: string; leaf: DirectoryNode } {
+  let label = node.name
+  let current = node
+  while (current.children.length === 1) {
+    current = current.children[0]
+    label += '/' + current.name
+  }
+  return { label, leaf: current }
+}
+
 function DirNode({
   node,
   depth,
@@ -55,9 +65,10 @@ function DirNode({
   selectedDirectory: string | undefined
   onSelect: (path: string | undefined) => void
 }): React.JSX.Element {
+  const { label, leaf } = compactChain(node)
   const [expanded, setExpanded] = useState(depth === 0)
-  const isActive = selectedDirectory === node.path
-  const hasChildren = node.children.length > 0
+  const isActive = selectedDirectory === leaf.path
+  const hasChildren = leaf.children.length > 0
 
   return (
     <div>
@@ -67,7 +78,7 @@ function DirNode({
           ${isActive ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'}
         `}
         style={{ paddingLeft: `${8 + depth * 12}px` }}
-        onClick={() => onSelect(isActive ? undefined : node.path)}
+        onClick={() => onSelect(isActive ? undefined : leaf.path)}
       >
         {hasChildren ? (
           <button
@@ -83,11 +94,11 @@ function DirNode({
           <span className="w-3 shrink-0" />
         )}
         <FolderIcon size={12} className="shrink-0 text-zinc-500" />
-        <span className="flex-1 truncate">{node.name}</span>
-        <span className="text-[10px] text-zinc-600 shrink-0">{node.count}</span>
+        <span className="flex-1 truncate">{label}</span>
+        <span className="text-[10px] text-zinc-600 shrink-0">{leaf.count}</span>
       </div>
       {expanded &&
-        node.children.map((child) => (
+        leaf.children.map((child) => (
           <DirNode
             key={child.path}
             node={child}
