@@ -7,6 +7,7 @@ interface UIState {
   gridColumns: number
   selectedAssetId: string | null
   sidebarWidth: number
+  detailWidth: number
   setViewMode: (mode: 'grid' | 'list') => void
   toggleSelect: (id: string) => void
   selectAll: (ids: string[]) => void
@@ -14,6 +15,7 @@ interface UIState {
   setGridColumns: (cols: number) => void
   setSelectedAssetId: (id: string | null) => void
   setSidebarWidth: (width: number) => void
+  setDetailWidth: (width: number) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -24,6 +26,7 @@ export const useUIStore = create<UIState>()(
       gridColumns: 5,
       selectedAssetId: null,
       sidebarWidth: 208,
+      detailWidth: 288,
 
       setViewMode: (mode) => set({ viewMode: mode }),
 
@@ -45,14 +48,16 @@ export const useUIStore = create<UIState>()(
       setGridColumns: (cols) => set({ gridColumns: cols }),
 
       setSelectedAssetId: (id) => set({ selectedAssetId: id }),
-      setSidebarWidth: (width) => set({ sidebarWidth: width })
+      setSidebarWidth: (width) => set({ sidebarWidth: width }),
+      setDetailWidth: (width) => set({ detailWidth: width })
     }),
     {
       name: 'asset-ui',
       partialize: (state) => ({
         viewMode: state.viewMode,
         gridColumns: state.gridColumns,
-        sidebarWidth: state.sidebarWidth
+        sidebarWidth: state.sidebarWidth,
+        detailWidth: state.detailWidth
       })
     }
   )

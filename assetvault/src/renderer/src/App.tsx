@@ -18,13 +18,15 @@ import { useUIStore } from './stores/uiStore'
 
 const SIDEBAR_MIN = 140
 const SIDEBAR_MAX = 400
+const DETAIL_MIN = 220
+const DETAIL_MAX = 520
 
 function App(): React.JSX.Element {
   const { assets, isLoading, fetchAssets, updateThumbnail } = useLibraryStore()
   const { fetchDirectories } = useFolderStore()
   const { query, types, tagIds, folderId, directory, colors, colorTolerance, sortBy, sortOrder } =
     useFilterStore()
-  const { selectedAssetId, setSelectedAssetId, sidebarWidth, setSidebarWidth } = useUIStore()
+  const { selectedAssetId, setSelectedAssetId, sidebarWidth, setSidebarWidth, detailWidth, setDetailWidth } = useUIStore()
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [importing, setImporting] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()
@@ -103,6 +105,15 @@ function App(): React.JSX.Element {
     { axis: 'x' }
   )
 
+  const bindDetailResize = useDrag(
+    ({ delta: [dx], memo = detailWidth }) => {
+      const next = Math.min(DETAIL_MAX, Math.max(DETAIL_MIN, memo - dx))
+      setDetailWidth(next)
+      return memo - dx
+    },
+    { axis: 'x' }
+  )
+
   async function handleAssetUpdate(): Promise<void> {
     await fetchAssets(currentFilter)
   }
@@ -147,11 +158,34 @@ function App(): React.JSX.Element {
         <Layout.Content style={{ overflow: 'hidden', display: 'flex' }}>
           <MainGrid assets={assets} isLoading={isLoading} onImport={handleImport} />
           {selectedAsset && (
-            <AssetDetail
-              asset={selectedAsset}
-              onClose={() => setSelectedAssetId(null)}
-              onAssetUpdate={handleAssetUpdate}
-            />
+            <div
+              style={{
+                width: detailWidth,
+                minWidth: detailWidth,
+                position: 'relative',
+                flexShrink: 0
+              }}
+            >
+              <div
+                {...bindDetailResize()}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: 4,
+                  height: '100%',
+                  cursor: 'col-resize',
+                  zIndex: 10,
+                  touchAction: 'none'
+                }}
+                className="hover:bg-zinc-500/50 transition-colors"
+              />
+              <AssetDetail
+                asset={selectedAsset}
+                onClose={() => setSelectedAssetId(null)}
+                onAssetUpdate={handleAssetUpdate}
+              />
+            </div>
           )}
         </Layout.Content>
       </Layout>
