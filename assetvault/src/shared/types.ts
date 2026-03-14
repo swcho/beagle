@@ -61,6 +61,7 @@ export interface ElectronAPI {
   getAsset: (id: string) => Promise<Asset>
   removeAssets: (ids: string[]) => Promise<void>
   generateThumbnails: (ids: string[]) => Promise<void>
+  saveThumbnailBuffer: (assetId: string, buffer: Uint8Array) => Promise<void>
   searchAssets: (query: string) => Promise<Asset[]>
   searchByColor: (hex: string, tolerance: number) => Promise<Asset[]>
   searchCombined: (filter: AssetFilter) => Promise<Asset[]>

@@ -6,6 +6,7 @@ import type { ImportProgress } from '@shared/types'
 
 import { AssetDetail } from './components/asset/AssetDetail'
 import { MainGrid } from './components/asset/MainGrid'
+import { Thumbnail3DCapture } from './components/asset/Thumbnail3DCapture'
 import { Sidebar } from './components/layout/Sidebar'
 import { StatusBar } from './components/layout/StatusBar'
 import { TopBar } from './components/layout/TopBar'
@@ -109,6 +110,7 @@ function App(): React.JSX.Element {
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>
       {contextHolder}
+      <Thumbnail3DCapture />
       <Layout.Header style={{ padding: 0, height: 'auto', lineHeight: 'normal' }}>
         <TopBar progress={progress} importing={importing} onImport={handleImport} />
       </Layout.Header>

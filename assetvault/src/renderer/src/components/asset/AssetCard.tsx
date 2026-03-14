@@ -12,11 +12,12 @@ import {
   FolderInput,
   FolderMinus
 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import type { Asset, AssetType } from '@shared/types'
 
 import { useHover } from '@renderer/hooks/useHover'
+import { useLazy3DThumbnail } from '@renderer/hooks/useLazy3DThumbnail'
 import { useFolderStore } from '@renderer/stores/folderStore'
 import { useUIStore } from '@renderer/stores/uiStore'
 
@@ -76,6 +77,8 @@ export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.E
   const { folders, selectedFolderId, addAssetsToFolder, removeAssetsFromFolder } = useFolderStore()
   const { hoverState, hoverProps } = useHover(300)
   const isSelected = selectedIds.has(asset.id)
+  const cardRef = useRef<HTMLDivElement>(null)
+  useLazy3DThumbnail(asset, cardRef)
   const assetType = getAssetType(asset.ext)
   const badge = TYPE_BADGE[assetType]
   const icon = TYPE_ICON[assetType] ?? <File size={32} className="text-zinc-500" />
@@ -124,6 +127,7 @@ export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.E
       <>
         <Dropdown menu={getContextMenu()} trigger={['contextMenu']}>
           <div
+            ref={cardRef}
             onClick={clickHandler}
             {...hoverProps}
             className={`
@@ -195,6 +199,7 @@ export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.E
     <>
       <Dropdown menu={getContextMenu()} trigger={['contextMenu']}>
         <div
+          ref={cardRef}
           onClick={clickHandler}
           {...hoverProps}
           className={`

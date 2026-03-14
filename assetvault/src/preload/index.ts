@@ -8,6 +8,8 @@ const api: ElectronAPI = {
   getAsset: (id: string) => ipcRenderer.invoke('get-asset', id),
   removeAssets: (ids: string[]) => ipcRenderer.invoke('remove-assets', ids),
   generateThumbnails: (ids: string[]) => ipcRenderer.invoke('generate-thumbnails', ids),
+  saveThumbnailBuffer: (assetId: string, buffer: Uint8Array) =>
+    ipcRenderer.invoke('save-thumbnail-buffer', assetId, buffer),
   searchAssets: (query: string) => ipcRenderer.invoke('search-assets', query),
   searchByColor: (hex: string, tolerance: number) =>
     ipcRenderer.invoke('search-by-color', hex, tolerance),
