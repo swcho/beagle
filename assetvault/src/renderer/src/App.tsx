@@ -1,3 +1,4 @@
+import { message } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { ImportProgress } from '@shared/types'
@@ -7,16 +8,10 @@ import { MainGrid } from './components/asset/MainGrid'
 import { Sidebar } from './components/layout/Sidebar'
 import { StatusBar } from './components/layout/StatusBar'
 import { TopBar } from './components/layout/TopBar'
-import { Toast, type ToastItem } from './components/ui/Toast'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useFilterStore } from './stores/filterStore'
 import { useLibraryStore } from './stores/libraryStore'
 import { useUIStore } from './stores/uiStore'
-
-let toastCounter = 0
-function makeToast(type: ToastItem['type'], message: string): ToastItem {
-  return { id: String(++toastCounter), type, message }
-}
 
 function App(): React.JSX.Element {
   const { assets, isLoading, fetchAssets, updateThumbnail } = useLibraryStore()
@@ -24,7 +19,7 @@ function App(): React.JSX.Element {
   const { selectedAssetId, setSelectedAssetId } = useUIStore()
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [importing, setImporting] = useState(false)
-  const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [messageApi, contextHolder] = message.useMessage()
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) ?? null
   const currentFilter = useMemo(
@@ -32,13 +27,14 @@ function App(): React.JSX.Element {
     [query, types, tagIds, colors, colorTolerance, sortBy, sortOrder]
   )
 
-  const dismissToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
-  }, [])
-
-  const addToast = useCallback((type: ToastItem['type'], message: string) => {
-    setToasts((prev) => [...prev, makeToast(type, message)])
-  }, [])
+  const addToast = useCallback(
+    (type: 'success' | 'error' | 'info', msg: string) => {
+      if (type === 'success') messageApi.success(msg)
+      else if (type === 'error') messageApi.error(msg)
+      else messageApi.info(msg)
+    },
+    [messageApi]
+  )
 
   useEffect(() => {
     fetchAssets(currentFilter)
@@ -96,6 +92,7 @@ function App(): React.JSX.Element {
 
   return (
     <div className="flex flex-col h-screen bg-zinc-900 text-white overflow-hidden">
+      {contextHolder}
       <TopBar progress={progress} importing={importing} onImport={handleImport} />
 
       <div className="flex flex-1 overflow-hidden">
@@ -111,7 +108,6 @@ function App(): React.JSX.Element {
       </div>
 
       <StatusBar />
-      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

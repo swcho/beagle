@@ -1,4 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { Button, Empty, Spin } from 'antd'
 import { FolderOpen, SearchX } from 'lucide-react'
 import { useRef, useEffect, useMemo } from 'react'
 
@@ -56,8 +57,8 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
-        불러오는 중...
+      <div className="flex-1 flex items-center justify-center">
+        <Spin size="large" />
       </div>
     )
   }
@@ -65,28 +66,26 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
   if (assets.length === 0) {
     if (hasActiveFilter) {
       return (
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-500">
-          <SearchX size={48} className="text-zinc-600" />
-          <p className="text-sm">검색 결과가 없습니다</p>
-          <button
-            onClick={resetFilter}
-            className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded text-sm font-medium transition-colors"
+        <div className="flex-1 flex items-center justify-center">
+          <Empty
+            image={<SearchX size={48} className="text-zinc-600 mx-auto" />}
+            description={<span className="text-zinc-500 text-sm">검색 결과가 없습니다</span>}
           >
-            필터 초기화
-          </button>
+            <Button onClick={resetFilter}>필터 초기화</Button>
+          </Empty>
         </div>
       )
     }
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-500">
-        <FolderOpen size={48} className="text-zinc-600" />
-        <p className="text-sm">폴더를 임포트해서 시작하세요</p>
-        <button
-          onClick={onImport}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-medium transition-colors"
+      <div className="flex-1 flex items-center justify-center">
+        <Empty
+          image={<FolderOpen size={48} className="text-zinc-600 mx-auto" />}
+          description={<span className="text-zinc-500 text-sm">폴더를 임포트해서 시작하세요</span>}
         >
-          폴더 임포트
-        </button>
+          <Button type="primary" onClick={onImport}>
+            폴더 임포트
+          </Button>
+        </Empty>
       </div>
     )
   }

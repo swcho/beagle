@@ -1,5 +1,6 @@
-import { X, FolderOpen, Tag as TagIcon } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { AutoComplete, Button, Tag as AntTag, Tooltip } from 'antd'
+import { FolderOpen, Tag as TagIcon, X } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
 
 import type { Asset, Tag } from '@shared/types'
 
@@ -31,8 +32,6 @@ function isFileThumbnail(path: string): boolean {
 export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX.Element {
   const { tags, fetchTags, createTag, updateAssetTags } = useTagStore()
   const [tagInput, setTagInput] = useState('')
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchTags()
@@ -44,9 +43,25 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
       !asset.tags.some((at) => at.id === t.id)
   )
 
+  const autoOptions = useMemo(
+    () =>
+      suggestions.map((t) => ({
+        value: t.id,
+        label: (
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: t.color }}
+            />
+            {t.name}
+          </div>
+        )
+      })),
+    [suggestions]
+  )
+
   async function addTag(tag: Tag): Promise<void> {
     setTagInput('')
-    setShowSuggestions(false)
     await updateAssetTags(
       asset.id,
       [...asset.tags, tag].map((t) => t.id)
@@ -62,20 +77,35 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
     onAssetUpdate()
   }
 
-  async function handleTagInputKeyDown(e: React.KeyboardEvent): Promise<void> {
+  function handleTagSelect(tagId: string): void {
+    const tag = tags.find((t) => t.id === tagId)
+    if (tag) void addTag(tag)
+  }
+
+  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (e.key === 'Enter' && tagInput.trim()) {
-      const existing = tags.find((t) => t.name.toLowerCase() === tagInput.trim().toLowerCase())
-      if (existing) {
-        await addTag(existing)
-      } else {
-        const colors = ['#6B7280', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899']
-        const color = colors[Math.floor(Math.random() * colors.length)]
-        const newTag = await createTag(tagInput.trim(), color)
-        await addTag(newTag)
-      }
+      e.preventDefault()
+      void (async () => {
+        const existing = tags.find((t) => t.name.toLowerCase() === tagInput.trim().toLowerCase())
+        if (existing && !asset.tags.some((at) => at.id === existing.id)) {
+          await addTag(existing)
+        } else if (!existing) {
+          const colorOptions = [
+            '#6B7280',
+            '#3B82F6',
+            '#10B981',
+            '#F59E0B',
+            '#EF4444',
+            '#8B5CF6',
+            '#EC4899'
+          ]
+          const color = colorOptions[Math.floor(Math.random() * colorOptions.length)]
+          const newTag = await createTag(tagInput.trim(), color)
+          await addTag(newTag)
+        }
+      })()
     } else if (e.key === 'Escape') {
       setTagInput('')
-      setShowSuggestions(false)
     }
   }
 
@@ -86,9 +116,13 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
         <span className="text-sm font-medium text-zinc-200">에셋 정보</span>
-        <button onClick={onClose} className="text-zinc-500 hover:text-zinc-200 transition-colors">
-          <X size={16} />
-        </button>
+        <Button
+          type="text"
+          size="small"
+          icon={<X size={16} />}
+          onClick={onClose}
+          className="text-zinc-500"
+        />
       </div>
 
       {/* 썸네일 */}
@@ -151,12 +185,12 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
             <p className="text-xs text-zinc-500 mb-2">주요 색상</p>
             <div className="flex gap-2">
               {asset.colors.map((c) => (
-                <div
-                  key={c}
-                  title={c}
-                  className="w-7 h-7 rounded-md border border-zinc-600 cursor-pointer"
-                  style={{ backgroundColor: c }}
-                />
+                <Tooltip key={c} title={c}>
+                  <div
+                    className="w-7 h-7 rounded-md border border-zinc-600 cursor-pointer"
+                    style={{ backgroundColor: c }}
+                  />
+                </Tooltip>
               ))}
             </div>
           </div>
@@ -171,62 +205,41 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
           {/* 현재 태그 목록 */}
           <div className="flex flex-wrap gap-1.5 mb-2">
             {asset.tags.map((tag) => (
-              <button
+              <AntTag
                 key={tag.id}
-                onClick={() => removeTag(tag.id)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-white hover:opacity-75 transition-opacity"
-                style={{ backgroundColor: tag.color }}
-                title="클릭하여 제거"
+                closable
+                onClose={() => removeTag(tag.id)}
+                color={tag.color}
+                style={{ marginInlineEnd: 0 }}
               >
                 {tag.name}
-                <X size={10} />
-              </button>
+              </AntTag>
             ))}
           </div>
 
           {/* 태그 추가 인풋 */}
-          <div className="relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={tagInput}
-              onChange={(e) => {
-                setTagInput(e.target.value)
-                setShowSuggestions(e.target.value.length > 0)
-              }}
-              onKeyDown={handleTagInputKeyDown}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-              placeholder="태그 추가... (Enter)"
-              className="w-full px-2.5 py-1.5 bg-zinc-700 border border-zinc-600 rounded text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
-            />
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-700 border border-zinc-600 rounded shadow-lg z-10 max-h-32 overflow-y-auto">
-                {suggestions.map((tag) => (
-                  <button
-                    key={tag.id}
-                    onMouseDown={() => addTag(tag)}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-zinc-200 hover:bg-zinc-600 transition-colors text-left"
-                  >
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    {tag.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <AutoComplete
+            value={tagInput}
+            onChange={setTagInput}
+            onSelect={handleTagSelect}
+            onKeyDown={handleTagKeyDown}
+            options={autoOptions}
+            placeholder="태그 추가... (Enter)"
+            size="small"
+            className="w-full"
+            defaultActiveFirstOption={false}
+            filterOption={false}
+          />
         </div>
 
         {/* 파인더에서 보기 */}
-        <button
+        <Button
+          block
+          icon={<FolderOpen size={13} />}
           onClick={() => window.api.showInFinder(asset.path)}
-          className="flex items-center justify-center gap-2 w-full px-3 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-xs text-zinc-300 transition-colors"
         >
-          <FolderOpen size={13} />
           파인더에서 보기
-        </button>
+        </Button>
       </div>
     </div>
   )

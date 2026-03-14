@@ -1,5 +1,7 @@
+import { Slider, Tag as AntTag, Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
 import { Tag, Trash2, Palette } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect } from 'react'
 
 import { useFilterStore } from '@renderer/stores/filterStore'
 import { useTagStore } from '@renderer/stores/tagStore'
@@ -21,22 +23,10 @@ const PRESET_COLORS = [
 export function Sidebar(): React.JSX.Element {
   const { tags, tagCounts, fetchTags, deleteTag } = useTagStore()
   const { tagIds, colors, colorTolerance, setFilter } = useFilterStore()
-  const [contextMenu, setContextMenu] = useState<{ tagId: string; x: number; y: number } | null>(
-    null
-  )
-  const contextRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchTags()
   }, [fetchTags])
-
-  useEffect(() => {
-    function handleClick(): void {
-      setContextMenu(null)
-    }
-    window.addEventListener('click', handleClick)
-    return () => window.removeEventListener('click', handleClick)
-  }, [])
 
   function toggleTagFilter(tagId: string): void {
     const next = tagIds.includes(tagId) ? tagIds.filter((id) => id !== tagId) : [...tagIds, tagId]
@@ -49,10 +39,23 @@ export function Sidebar(): React.JSX.Element {
   }
 
   async function handleDelete(tagId: string): Promise<void> {
-    setContextMenu(null)
     await deleteTag(tagId)
     if (tagIds.includes(tagId)) {
       setFilter({ tagIds: tagIds.filter((id) => id !== tagId) })
+    }
+  }
+
+  function getTagMenu(tagId: string): MenuProps {
+    return {
+      items: [
+        {
+          key: 'delete',
+          label: '태그 삭제',
+          icon: <Trash2 size={12} />,
+          danger: true,
+          onClick: () => handleDelete(tagId)
+        }
+      ]
     }
   }
 
@@ -73,37 +76,34 @@ export function Sidebar(): React.JSX.Element {
               const isActive = tagIds.includes(tag.id)
               const count = tagCounts[tag.id] ?? 0
               return (
-                <div
-                  key={tag.id}
-                  className={`
-                    group flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors
-                    ${isActive ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'}
-                  `}
-                  onClick={() => toggleTagFilter(tag.id)}
-                  onContextMenu={(e) => {
-                    e.preventDefault()
-                    setContextMenu({ tagId: tag.id, x: e.clientX, y: e.clientY })
-                  }}
-                >
-                  <label
-                    className="w-3 h-3 rounded-full shrink-0 cursor-pointer"
-                    style={{ backgroundColor: tag.color }}
-                    onClick={(e) => e.stopPropagation()}
-                    title="색상 변경"
+                <Dropdown key={tag.id} menu={getTagMenu(tag.id)} trigger={['contextMenu']}>
+                  <div
+                    className={`
+                      group flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors
+                      ${isActive ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'}
+                    `}
+                    onClick={() => toggleTagFilter(tag.id)}
                   >
-                    <input
-                      type="color"
-                      className="opacity-0 w-0 h-0 absolute"
-                      defaultValue={tag.color}
-                    />
-                  </label>
-                  <span className="text-xs flex-1 truncate">{tag.name}</span>
-                  {count > 0 && (
-                    <span className="text-[10px] text-zinc-500 bg-zinc-700 px-1.5 py-0.5 rounded-full shrink-0">
-                      {count}
-                    </span>
-                  )}
-                </div>
+                    <label
+                      className="w-3 h-3 rounded-full shrink-0 cursor-pointer"
+                      style={{ backgroundColor: tag.color }}
+                      onClick={(e) => e.stopPropagation()}
+                      title="색상 변경"
+                    >
+                      <input
+                        type="color"
+                        className="opacity-0 w-0 h-0 absolute"
+                        defaultValue={tag.color}
+                      />
+                    </label>
+                    <span className="text-xs flex-1 truncate">{tag.name}</span>
+                    {count > 0 && (
+                      <span className="text-[10px] text-zinc-500 bg-zinc-700 px-1.5 py-0.5 rounded-full shrink-0">
+                        {count}
+                      </span>
+                    )}
+                  </div>
+                </Dropdown>
               )
             })}
           </div>
@@ -141,15 +141,15 @@ export function Sidebar(): React.JSX.Element {
             {colors.map((hex) => {
               const label = PRESET_COLORS.find((p) => p.hex === hex)?.label ?? hex
               return (
-                <button
+                <AntTag
                   key={hex}
-                  onClick={() => toggleColorFilter(hex)}
-                  className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-white border border-zinc-600"
-                  style={{ backgroundColor: hex + '33', borderColor: hex }}
+                  closable
+                  onClose={() => toggleColorFilter(hex)}
+                  color={hex}
+                  style={{ marginInlineEnd: 0 }}
                 >
-                  <span style={{ color: hex }}>●</span> {label}
-                  <span className="text-zinc-400">✕</span>
-                </button>
+                  {label}
+                </AntTag>
               )
             })}
           </div>
@@ -161,35 +161,16 @@ export function Sidebar(): React.JSX.Element {
             <span>유사도</span>
             <span>{Math.round(colorTolerance * 100)}%</span>
           </div>
-          <input
-            type="range"
-            min="0.05"
-            max="0.5"
-            step="0.05"
+          <Slider
+            min={0.05}
+            max={0.5}
+            step={0.05}
             value={colorTolerance}
-            onChange={(e) => setFilter({ colorTolerance: parseFloat(e.target.value) })}
-            className="w-full accent-blue-500"
+            onChange={(val) => setFilter({ colorTolerance: val })}
+            tooltip={{ formatter: (val) => `${Math.round((val ?? 0) * 100)}%` }}
           />
         </div>
       </div>
-
-      {/* 우클릭 컨텍스트 메뉴 */}
-      {contextMenu && (
-        <div
-          ref={contextRef}
-          style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 9999 }}
-          className="bg-zinc-700 border border-zinc-600 rounded shadow-xl py-1 min-w-[120px]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            onClick={() => handleDelete(contextMenu.tagId)}
-            className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-400 hover:bg-zinc-600 transition-colors"
-          >
-            <Trash2 size={12} />
-            태그 삭제
-          </button>
-        </div>
-      )}
     </div>
   )
 }
