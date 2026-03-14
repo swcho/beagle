@@ -73,10 +73,11 @@ function isFileThumbnail(path: string): boolean {
 }
 
 export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.Element {
-  const { selectedIds, toggleSelect, setSelectedAssetId } = useUIStore()
+  const { selectedIds, toggleSelect, setSelectedAssetId, selectedAssetId } = useUIStore()
   const { folders, selectedFolderId, addAssetsToFolder, removeAssetsFromFolder } = useFolderStore()
   const { hoverState, hoverProps } = useHover(300)
   const isSelected = selectedIds.has(asset.id)
+  const isFocused = asset.id === selectedAssetId
   const cardRef = useRef<HTMLDivElement>(null)
   useLazy3DThumbnail(asset, cardRef)
   const assetType = getAssetType(asset.ext)
@@ -133,7 +134,7 @@ export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.E
             className={`
               flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer
               border transition-colors duration-150
-              ${isSelected ? 'bg-blue-950 border-blue-500' : 'bg-zinc-800 border-transparent hover:border-zinc-600'}
+              ${isSelected ? 'bg-blue-950 border-blue-500' : isFocused ? 'bg-zinc-700 border-blue-400' : 'bg-zinc-800 border-transparent hover:border-zinc-600'}
             `}
           >
             {/* 작은 썸네일 */}
@@ -188,7 +189,7 @@ export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.E
           </div>
         </Dropdown>
 
-        {hoverState.isHovered && (
+        {hoverState.isHovered && !selectedAssetId && (
           <AssetPreviewPopup asset={asset} x={hoverState.x} y={hoverState.y} />
         )}
       </>
@@ -205,7 +206,7 @@ export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.E
           className={`
             group relative flex flex-col bg-zinc-800 rounded-lg overflow-hidden cursor-pointer
             border-2 transition-colors duration-150
-            ${isSelected ? 'border-blue-500' : 'border-transparent hover:border-zinc-600'}
+            ${isSelected ? 'border-blue-500' : isFocused ? 'border-blue-400 ring-2 ring-blue-400/30' : 'border-transparent hover:border-zinc-600'}
           `}
         >
           {/* 썸네일 영역 */}
@@ -258,7 +259,7 @@ export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.E
         </div>
       </Dropdown>
 
-      {hoverState.isHovered && (
+      {hoverState.isHovered && !selectedAssetId && (
         <AssetPreviewPopup asset={asset} x={hoverState.x} y={hoverState.y} />
       )}
     </>

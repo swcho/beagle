@@ -1,7 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Button, Col, Empty, Row, Spin } from 'antd'
 import { FolderOpen, SearchX } from 'lucide-react'
-import { useRef, useEffect, useMemo } from 'react'
+import { useRef, useEffect, useMemo, useCallback } from 'react'
 
 import type { Asset } from '@shared/types'
 
@@ -18,7 +18,8 @@ interface MainGridProps {
 
 export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { gridColumns, setGridColumns, viewMode } = useUIStore()
+  const { gridColumns, setGridColumns, viewMode, selectedAssetId, setSelectedAssetId } =
+    useUIStore()
   const { query, types, tagIds, colors, resetFilter } = useFilterStore()
   const hasActiveFilter = !!(query || types.length || tagIds.length || colors.length)
 
@@ -56,6 +57,32 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
     overscan: 3
   })
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
+      e.preventDefault()
+
+      const currentIdx = selectedAssetId ? assets.findIndex((a) => a.id === selectedAssetId) : -1
+      const cols = viewMode === 'list' ? 1 : gridColumns
+      let next = currentIdx
+
+      if (e.key === 'ArrowRight') next = Math.min(currentIdx + 1, assets.length - 1)
+      else if (e.key === 'ArrowLeft') next = Math.max(currentIdx - 1, 0)
+      else if (e.key === 'ArrowDown') next = Math.min(currentIdx + cols, assets.length - 1)
+      else if (e.key === 'ArrowUp') next = Math.max(currentIdx - cols, 0)
+
+      if (next === currentIdx && currentIdx === -1) next = 0
+      if (next < 0) next = 0
+
+      if (next !== currentIdx && assets[next]) {
+        setSelectedAssetId(assets[next].id)
+        const rowIdx = Math.floor(next / cols)
+        rowVirtualizer.scrollToIndex(rowIdx, { align: 'auto' })
+      }
+    },
+    [selectedAssetId, assets, viewMode, gridColumns, setSelectedAssetId, rowVirtualizer]
+  )
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -92,7 +119,13 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
   }
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto p-3">
+    <div
+      ref={containerRef}
+      className="flex-1 overflow-y-auto p-3 outline-none"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      onClick={() => containerRef.current?.focus()}
+    >
       <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const row = rows[virtualRow.index]

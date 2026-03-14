@@ -6,6 +6,10 @@ import type { Asset, Tag } from '@shared/types'
 
 import { useTagStore } from '@renderer/stores/tagStore'
 
+import { AudioPreview } from './preview/AudioPreview'
+
+const AUDIO_EXTS = new Set(['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'])
+
 interface Props {
   asset: Asset
   onClose: () => void
@@ -126,17 +130,26 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
       </div>
 
       {/* 썸네일 */}
-      <div className="w-full aspect-square bg-zinc-700 flex items-center justify-center">
-        {hasThumbnail ? (
-          <img
-            src={`file://${asset.thumbnail}`}
-            alt={asset.name}
-            className="w-full h-full object-contain"
-          />
-        ) : (
-          <span className="text-zinc-500 text-xs uppercase">{asset.ext}</span>
-        )}
-      </div>
+      {!AUDIO_EXTS.has(asset.ext.toLowerCase()) && (
+        <div className="w-full aspect-square bg-zinc-700 flex items-center justify-center">
+          {hasThumbnail ? (
+            <img
+              src={`file://${asset.thumbnail}`}
+              alt={asset.name}
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <span className="text-zinc-500 text-xs uppercase">{asset.ext}</span>
+          )}
+        </div>
+      )}
+
+      {/* 오디오 플레이어 */}
+      {AUDIO_EXTS.has(asset.ext.toLowerCase()) && (
+        <div className="p-3 border-b border-zinc-700">
+          <AudioPreview key={asset.id} asset={asset} autoPlay />
+        </div>
+      )}
 
       <div className="flex flex-col gap-4 p-4">
         {/* 파일명 */}
