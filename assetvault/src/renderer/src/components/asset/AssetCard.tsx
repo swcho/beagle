@@ -24,6 +24,7 @@ import { AssetPreviewPopup } from './AssetPreviewPopup'
 
 interface AssetCardProps {
   asset: Asset
+  mode?: 'grid' | 'list'
 }
 
 const TYPE_BADGE: Record<AssetType, { label: string; className: string }> = {
@@ -42,6 +43,12 @@ const TYPE_ICON: Record<AssetType, React.ReactNode> = {
   font: <Type size={32} className="text-zinc-500" />,
   model3d: <Box size={32} className="text-zinc-500" />,
   doc: <FileText size={32} className="text-zinc-500" />
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'bmp'])
@@ -64,7 +71,7 @@ function isFileThumbnail(path: string): boolean {
   return Boolean(path) && !path.startsWith('__placeholder:')
 }
 
-export function AssetCard({ asset }: AssetCardProps): React.JSX.Element {
+export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.Element {
   const { selectedIds, toggleSelect, setSelectedAssetId } = useUIStore()
   const { folders, selectedFolderId, addAssetsToFolder, removeAssetsFromFolder } = useFolderStore()
   const { hoverState, hoverProps } = useHover(300)
@@ -104,17 +111,91 @@ export function AssetCard({ asset }: AssetCardProps): React.JSX.Element {
     return { items }
   }
 
+  const clickHandler = (e: React.MouseEvent): void => {
+    if (e.metaKey || e.ctrlKey) {
+      toggleSelect(asset.id)
+    } else {
+      setSelectedAssetId(asset.id)
+    }
+  }
+
+  if (mode === 'list') {
+    return (
+      <>
+        <Dropdown menu={getContextMenu()} trigger={['contextMenu']}>
+          <div
+            onClick={clickHandler}
+            {...hoverProps}
+            className={`
+              flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer
+              border transition-colors duration-150
+              ${isSelected ? 'bg-blue-950 border-blue-500' : 'bg-zinc-800 border-transparent hover:border-zinc-600'}
+            `}
+          >
+            {/* 작은 썸네일 */}
+            <div className="relative w-10 h-10 shrink-0 bg-zinc-700 rounded flex items-center justify-center overflow-hidden">
+              {hasThumbnail && !imgError ? (
+                <img
+                  src={`file://${asset.thumbnail}`}
+                  alt={asset.name}
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+                  onError={() => setImgError(true)}
+                />
+              ) : imgError ? (
+                <AlertTriangle size={16} className="text-amber-600" />
+              ) : (
+                <div className="scale-50">{icon}</div>
+              )}
+            </div>
+
+            {/* 타입 뱃지 */}
+            <span
+              className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded ${badge.className}`}
+            >
+              {badge.label}
+            </span>
+
+            {/* 파일명 */}
+            <p className="flex-1 text-sm text-zinc-300 truncate">{asset.name}</p>
+
+            {/* 확장자 */}
+            <span className="shrink-0 text-xs text-zinc-500 w-12 text-right">.{asset.ext}</span>
+
+            {/* 파일 크기 */}
+            <span className="shrink-0 text-xs text-zinc-500 w-16 text-right">
+              {formatSize(asset.size)}
+            </span>
+
+            {/* 선택 체크 */}
+            {isSelected && (
+              <div className="shrink-0 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path
+                    d="M1 4L3.5 6.5L9 1"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            )}
+          </div>
+        </Dropdown>
+
+        {hoverState.isHovered && (
+          <AssetPreviewPopup asset={asset} x={hoverState.x} y={hoverState.y} />
+        )}
+      </>
+    )
+  }
+
   return (
     <>
       <Dropdown menu={getContextMenu()} trigger={['contextMenu']}>
         <div
-          onClick={(e) => {
-            if (e.metaKey || e.ctrlKey) {
-              toggleSelect(asset.id)
-            } else {
-              setSelectedAssetId(asset.id)
-            }
-          }}
+          onClick={clickHandler}
           {...hoverProps}
           className={`
             group relative flex flex-col bg-zinc-800 rounded-lg overflow-hidden cursor-pointer

@@ -18,7 +18,7 @@ interface MainGridProps {
 
 export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { gridColumns, setGridColumns } = useUIStore()
+  const { gridColumns, setGridColumns, viewMode } = useUIStore()
   const { query, types, tagIds, colors, resetFilter } = useFilterStore()
   const hasActiveFilter = !!(query || types.length || tagIds.length || colors.length)
 
@@ -40,18 +40,19 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
 
   // assets를 행(row) 단위로 묶음
   const rows = useMemo(() => {
+    if (viewMode === 'list') return assets.map((a) => [a])
     const result: Asset[][] = []
     for (let i = 0; i < assets.length; i += gridColumns) {
       result.push(assets.slice(i, i + gridColumns))
     }
     return result
-  }, [assets, gridColumns])
+  }, [assets, gridColumns, viewMode])
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => 180,
+    estimateSize: () => (viewMode === 'list' ? 52 : 180),
     overscan: 3
   })
 
@@ -95,7 +96,6 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
       <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const row = rows[virtualRow.index]
-          const colFlex = `0 0 calc(100% / ${gridColumns})`
           return (
             <div
               key={virtualRow.key}
@@ -103,16 +103,25 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
               ref={rowVirtualizer.measureElement}
               style={{ position: 'absolute', top: virtualRow.start, left: 0, right: 0 }}
             >
-              <Row gutter={[8, 0]} style={{ paddingBottom: 8 }}>
-                {row.map((asset) => (
-                  <Col
-                    key={asset.id}
-                    style={{ flex: colFlex, maxWidth: `calc(100% / ${gridColumns})` }}
-                  >
-                    <AssetCard asset={asset} />
-                  </Col>
-                ))}
-              </Row>
+              {viewMode === 'list' ? (
+                <div className="pb-1">
+                  <AssetCard asset={row[0]} mode="list" />
+                </div>
+              ) : (
+                <Row gutter={[8, 0]} style={{ paddingBottom: 8 }}>
+                  {row.map((asset) => {
+                    const colFlex = `0 0 calc(100% / ${gridColumns})`
+                    return (
+                      <Col
+                        key={asset.id}
+                        style={{ flex: colFlex, maxWidth: `calc(100% / ${gridColumns})` }}
+                      >
+                        <AssetCard asset={asset} />
+                      </Col>
+                    )
+                  })}
+                </Row>
+              )}
             </div>
           )
         })}
