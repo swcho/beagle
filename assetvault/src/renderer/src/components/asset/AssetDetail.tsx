@@ -1,5 +1,5 @@
 import { AutoComplete, Button, Tag as AntTag, Tooltip } from 'antd'
-import { FolderOpen, Tag as TagIcon, X } from 'lucide-react'
+import { FolderOpen, Tag as TagIcon, X, ScrollText, ExternalLink } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 
 import type { Asset, Tag } from '@shared/types'
@@ -116,7 +116,7 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
   const hasThumbnail = asset.thumbnail && isFileThumbnail(asset.thumbnail)
 
   return (
-    <div className="w-72 flex flex-col bg-zinc-850 border-l border-zinc-700 overflow-y-auto shrink-0">
+    <div className="w-full h-full flex flex-col bg-zinc-850 border-l border-zinc-700 overflow-y-auto">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
         <span className="text-sm font-medium text-zinc-200">에셋 정보</span>
@@ -244,6 +244,45 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
             filterOption={false}
           />
         </div>
+
+        {/* Attribution */}
+        {asset.attribution && (
+          <div>
+            <p className="text-xs text-zinc-500 mb-2 flex items-center gap-1">
+              <ScrollText size={11} /> Attribution
+            </p>
+            <div className="flex flex-col gap-1 text-xs bg-zinc-800 rounded-md p-2.5">
+              <div className="flex justify-between">
+                <span className="text-zinc-500">저작자</span>
+                <span className="text-zinc-300">{asset.attribution.author}</span>
+              </div>
+              {asset.attribution.license && (
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">라이선스</span>
+                  <span className="text-zinc-300">{asset.attribution.license}</span>
+                </div>
+              )}
+              {asset.attribution.url && (
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-500">URL</span>
+                  <button
+                    className="flex items-center gap-1 text-blue-400 hover:text-blue-300 truncate max-w-[160px]"
+                    onClick={() => window.open(asset.attribution!.url, '_blank')}
+                    title={asset.attribution.url}
+                  >
+                    <ExternalLink size={10} className="shrink-0" />
+                    <span className="truncate">{asset.attribution.url.replace(/^https?:\/\//, '')}</span>
+                  </button>
+                </div>
+              )}
+              {asset.attribution.note && (
+                <p className="text-zinc-400 text-[10px] leading-relaxed mt-0.5">
+                  {asset.attribution.note}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 파인더에서 보기 */}
         <Button

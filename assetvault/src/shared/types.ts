@@ -1,3 +1,12 @@
+export interface Attribution {
+  id: string
+  url?: string
+  author: string
+  license?: string
+  note?: string
+  createdAt: number
+}
+
 export interface Asset {
   id: string
   path: string
@@ -10,6 +19,7 @@ export interface Asset {
   thumbnail?: string
   colors: string[]
   tags: Tag[]
+  attribution?: Attribution
   createdAt: number
   importedAt: number
 }
@@ -78,6 +88,15 @@ export interface ElectronAPI {
   addAssetsToFolder: (folderId: string, assetIds: string[]) => Promise<void>
   removeAssetsFromFolder: (folderId: string, assetIds: string[]) => Promise<void>
   getFolderAssetCounts: () => Promise<Record<string, number>>
+  getAttributions: () => Promise<Attribution[]>
+  createAttribution: (data: Omit<Attribution, 'id' | 'createdAt'>) => Promise<Attribution>
+  updateAttribution: (
+    id: string,
+    data: Partial<Omit<Attribution, 'id' | 'createdAt'>>
+  ) => Promise<Attribution>
+  deleteAttribution: (id: string) => Promise<void>
+  setDirectoryAttribution: (directoryPath: string, attributionId: string | null) => Promise<void>
+  getDirectoryAttributionMap: () => Promise<Record<string, Attribution>>
   openFolderDialog: () => Promise<string | null>
   showInFinder: (path: string) => Promise<void>
   on: (channel: string, cb: (...args: unknown[]) => void) => void

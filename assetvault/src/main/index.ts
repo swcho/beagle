@@ -6,6 +6,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import icon from '../../resources/icon.png?asset'
 
 import { initializeDatabase } from './db/schema'
+import { registerAttributionHandlers } from './ipc/attributions'
 import { registerFolderHandlers } from './ipc/folders'
 import { registerLibraryHandlers } from './ipc/library'
 import { registerSearchHandlers } from './ipc/search'
@@ -37,6 +38,7 @@ function createWindow(): void {
   registerTagHandlers()
   registerSearchHandlers()
   registerFolderHandlers()
+  registerAttributionHandlers()
 
   mainWindow.on('ready-to-show', () => {
     mainWindow!.show()

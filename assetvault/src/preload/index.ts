@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
-import type { ElectronAPI, AssetFilter } from '../shared/types'
+import type { Attribution, ElectronAPI, AssetFilter } from '../shared/types'
 
 const api: ElectronAPI = {
   importFolder: (path: string) => ipcRenderer.invoke('import-folder', path),
@@ -31,6 +31,15 @@ const api: ElectronAPI = {
   removeAssetsFromFolder: (folderId: string, assetIds: string[]) =>
     ipcRenderer.invoke('remove-assets-from-folder', folderId, assetIds),
   getFolderAssetCounts: () => ipcRenderer.invoke('get-folder-asset-counts'),
+  getAttributions: () => ipcRenderer.invoke('get-attributions'),
+  createAttribution: (data: Omit<Attribution, 'id' | 'createdAt'>) =>
+    ipcRenderer.invoke('create-attribution', data),
+  updateAttribution: (id: string, data: Partial<Omit<Attribution, 'id' | 'createdAt'>>) =>
+    ipcRenderer.invoke('update-attribution', id, data),
+  deleteAttribution: (id: string) => ipcRenderer.invoke('delete-attribution', id),
+  setDirectoryAttribution: (directoryPath: string, attributionId: string | null) =>
+    ipcRenderer.invoke('set-directory-attribution', directoryPath, attributionId),
+  getDirectoryAttributionMap: () => ipcRenderer.invoke('get-directory-attribution-map'),
   openFolderDialog: () => ipcRenderer.invoke('open-folder-dialog'),
   showInFinder: (path: string) => ipcRenderer.invoke('show-in-finder', path),
   on: (channel: string, cb: (...args: unknown[]) => void) => {

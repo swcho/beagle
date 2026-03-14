@@ -10,16 +10,18 @@ import {
   Plus,
   HardDrive,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  ScrollText
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import type { AssetType, DirectoryNode, Folder } from '@shared/types'
+import type { AssetType, Attribution, DirectoryNode, Folder } from '@shared/types'
 
 import { useFilterStore } from '@renderer/stores/filterStore'
 import { useFolderStore } from '@renderer/stores/folderStore'
 import { useTagStore } from '@renderer/stores/tagStore'
 import { useUIStore } from '@renderer/stores/uiStore'
+import { AttributionModal } from '@renderer/components/asset/AttributionModal'
 
 const ASSET_TYPES: { type: AssetType; label: string; className: string }[] = [
   { type: 'image', label: 'IMG', className: 'bg-blue-900 text-blue-300' },
@@ -58,45 +60,66 @@ function DirNode({
   node,
   depth,
   selectedDirectory,
-  onSelect
+  directoryAttributions,
+  onSelect,
+  onSetAttribution
 }: {
   node: DirectoryNode
   depth: number
   selectedDirectory: string | undefined
+  directoryAttributions: Map<string, Attribution>
   onSelect: (path: string | undefined) => void
+  onSetAttribution: (path: string, existing?: Attribution) => void
 }): React.JSX.Element {
   const { label, leaf } = compactChain(node)
   const [expanded, setExpanded] = useState(depth === 0)
   const isActive = selectedDirectory === leaf.path
   const hasChildren = leaf.children.length > 0
+  const existing = directoryAttributions.get(leaf.path)
+
+  const contextMenu: MenuProps = {
+    items: [
+      {
+        key: 'attribution',
+        label: existing ? 'Attribution 편집' : 'Attribution 설정',
+        icon: <ScrollText size={12} />,
+        onClick: () => onSetAttribution(leaf.path, existing)
+      }
+    ]
+  }
 
   return (
     <div>
-      <div
-        className={`
-          flex items-center gap-1 px-2 py-1 rounded cursor-pointer transition-colors text-xs
-          ${isActive ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'}
-        `}
-        style={{ paddingLeft: `${8 + depth * 12}px` }}
-        onClick={() => onSelect(isActive ? undefined : leaf.path)}
-      >
-        {hasChildren ? (
-          <button
-            className="shrink-0 text-zinc-500 hover:text-zinc-300"
-            onClick={(e) => {
-              e.stopPropagation()
-              setExpanded((v) => !v)
-            }}
-          >
-            {expanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
-          </button>
-        ) : (
-          <span className="w-3 shrink-0" />
-        )}
-        <FolderIcon size={12} className="shrink-0 text-zinc-500" />
-        <span className="flex-1 truncate">{label}</span>
-        <span className="text-[10px] text-zinc-600 shrink-0">{leaf.count}</span>
-      </div>
+      <Dropdown menu={contextMenu} trigger={['contextMenu']}>
+        <div
+          className={`
+            flex items-center gap-1 px-2 py-1 rounded cursor-pointer transition-colors text-xs
+            ${isActive ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'}
+          `}
+          style={{ paddingLeft: `${8 + depth * 12}px` }}
+          onClick={() => onSelect(isActive ? undefined : leaf.path)}
+        >
+          {hasChildren ? (
+            <button
+              className="shrink-0 text-zinc-500 hover:text-zinc-300"
+              onClick={(e) => {
+                e.stopPropagation()
+                setExpanded((v) => !v)
+              }}
+            >
+              {expanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+            </button>
+          ) : (
+            <span className="w-3 shrink-0" />
+          )}
+          <FolderIcon size={12} className="shrink-0 text-zinc-500" />
+          <span className="flex-1 truncate">{label}</span>
+          {existing && (
+            <ScrollText size={10} className="shrink-0 text-zinc-500" title={`Attribution: ${existing.author}`} />
+          )}
+          <span className="text-[10px] text-zinc-600 shrink-0">{leaf.count}</span>
+        </div>
+      </Dropdown>
       {expanded &&
         leaf.children.map((child) => (
           <DirNode
@@ -104,7 +127,9 @@ function DirNode({
             node={child}
             depth={depth + 1}
             selectedDirectory={selectedDirectory}
+            directoryAttributions={directoryAttributions}
             onSelect={onSelect}
+            onSetAttribution={onSetAttribution}
           />
         ))}
     </div>
@@ -226,6 +251,26 @@ export function Sidebar(): React.JSX.Element {
   const { selectedIds } = useUIStore()
   const [creatingFolder, setCreatingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
+  const [attributionModal, setAttributionModal] = useState<{
+    path: string
+    existing?: Attribution
+  } | null>(null)
+  const [directoryAttributions, setDirectoryAttributions] = useState<Map<string, Attribution>>(
+    new Map()
+  )
+
+  async function refreshDirectoryAttributions(): Promise<void> {
+    const map = await window.api.getDirectoryAttributionMap()
+    setDirectoryAttributions(new Map(Object.entries(map)))
+  }
+
+  function handleSetAttribution(path: string, existing?: Attribution): void {
+    setAttributionModal({ path, existing })
+  }
+
+  function handleAttributionApplied(): void {
+    void refreshDirectoryAttributions()
+  }
 
   function toggleTypeFilter(type: AssetType): void {
     const next = types.includes(type) ? types.filter((t) => t !== type) : [...types, type]
@@ -236,6 +281,7 @@ export function Sidebar(): React.JSX.Element {
     fetchTags()
     fetchFolders()
     fetchDirectories()
+    void refreshDirectoryAttributions()
   }, [fetchTags, fetchFolders, fetchDirectories])
 
   function toggleTagFilter(tagId: string): void {
@@ -278,6 +324,15 @@ export function Sidebar(): React.JSX.Element {
 
   return (
     <>
+      {attributionModal && (
+        <AttributionModal
+          directoryPath={attributionModal.path}
+          existingAttribution={attributionModal.existing}
+          open={true}
+          onClose={() => setAttributionModal(null)}
+          onApplied={handleAttributionApplied}
+        />
+      )}
       {/* 라이브러리 (폴더) 섹션 */}
       <div className="px-3 py-3 border-b border-zinc-700">
         <div className="flex items-center gap-2 mb-2">
@@ -345,7 +400,9 @@ export function Sidebar(): React.JSX.Element {
                 node={node}
                 depth={0}
                 selectedDirectory={directory}
+                directoryAttributions={directoryAttributions}
                 onSelect={(path) => setFilter({ directory: path })}
+                onSetAttribution={handleSetAttribution}
               />
             ))}
           </div>

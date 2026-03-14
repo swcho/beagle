@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 
 import { SUPPORTED_FORMATS } from '../../shared/types'
-import type { Asset, AssetFilter, Folder, Tag } from '../../shared/types'
+import type { Asset, AssetFilter, Attribution, Folder, Tag } from '../../shared/types'
 
 import { getDatabase } from './schema'
 
@@ -16,9 +16,31 @@ interface AssetRow {
   duration: number | null
   thumbnail: string | null
   colors: string
+  attribution_id: string | null
   created_at: number
   imported_at: number
   tags_json: string | null
+  attribution_json: string | null
+}
+
+interface AttributionRow {
+  id: string
+  url: string | null
+  author: string
+  license: string | null
+  note: string | null
+  created_at: number
+}
+
+function rowToAttribution(row: AttributionRow): Attribution {
+  return {
+    id: row.id,
+    url: row.url ?? undefined,
+    author: row.author,
+    license: row.license ?? undefined,
+    note: row.note ?? undefined,
+    createdAt: row.created_at
+  }
 }
 
 function rowToAsset(row: AssetRow): Asset {
@@ -36,6 +58,13 @@ function rowToAsset(row: AssetRow): Asset {
     colors = []
   }
 
+  let attribution: Attribution | undefined
+  try {
+    attribution = row.attribution_json ? rowToAttribution(JSON.parse(row.attribution_json)) : undefined
+  } catch {
+    attribution = undefined
+  }
+
   return {
     id: row.id,
     path: row.path,
@@ -48,6 +77,7 @@ function rowToAsset(row: AssetRow): Asset {
     thumbnail: row.thumbnail ?? undefined,
     colors,
     tags,
+    attribution,
     createdAt: row.created_at,
     importedAt: row.imported_at
   }
@@ -172,10 +202,15 @@ export function getAssets(filter: AssetFilter & { _ids?: string[] }): Asset[] {
           THEN json_object('id', t.id, 'name', t.name, 'color', t.color)
           ELSE NULL
         END
-      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json
+      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json,
+      CASE WHEN attr.id IS NOT NULL
+        THEN json_object('id', attr.id, 'url', attr.url, 'author', attr.author, 'license', attr.license, 'note', attr.note, 'created_at', attr.created_at)
+        ELSE NULL
+      END AS attribution_json
     FROM assets a
     LEFT JOIN asset_tags at3 ON at3.asset_id = a.id
     LEFT JOIN tags t ON t.id = at3.tag_id
+    LEFT JOIN attributions attr ON attr.id = a.attribution_id
     ${where}
     GROUP BY a.id
     ORDER BY ${sortBy} ${sortOrder}
@@ -198,10 +233,15 @@ export function getAssetById(id: string): Asset | null {
           THEN json_object('id', t.id, 'name', t.name, 'color', t.color)
           ELSE NULL
         END
-      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json
+      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json,
+      CASE WHEN attr.id IS NOT NULL
+        THEN json_object('id', attr.id, 'url', attr.url, 'author', attr.author, 'license', attr.license, 'note', attr.note, 'created_at', attr.created_at)
+        ELSE NULL
+      END AS attribution_json
     FROM assets a
     LEFT JOIN asset_tags at3 ON at3.asset_id = a.id
     LEFT JOIN tags t ON t.id = at3.tag_id
+    LEFT JOIN attributions attr ON attr.id = a.attribution_id
     WHERE a.id = ?
     GROUP BY a.id
   `
@@ -274,11 +314,16 @@ export function searchAssets(query: string): Asset[] {
           THEN json_object('id', t.id, 'name', t.name, 'color', t.color)
           ELSE NULL
         END
-      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json
+      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json,
+      CASE WHEN attr.id IS NOT NULL
+        THEN json_object('id', attr.id, 'url', attr.url, 'author', attr.author, 'license', attr.license, 'note', attr.note, 'created_at', attr.created_at)
+        ELSE NULL
+      END AS attribution_json
     FROM assets a
     JOIN assets_fts fts ON fts.rowid = a.rowid
     LEFT JOIN asset_tags at3 ON at3.asset_id = a.id
     LEFT JOIN tags t ON t.id = at3.tag_id
+    LEFT JOIN attributions attr ON attr.id = a.attribution_id
     WHERE assets_fts MATCH ?
     GROUP BY a.id
     ORDER BY rank
@@ -328,10 +373,15 @@ export function searchByColor(hex: string, tolerance: number): Asset[] {
           THEN json_object('id', t.id, 'name', t.name, 'color', t.color)
           ELSE NULL
         END
-      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json
+      ) FILTER (WHERE t.id IS NOT NULL) AS tags_json,
+      CASE WHEN attr.id IS NOT NULL
+        THEN json_object('id', attr.id, 'url', attr.url, 'author', attr.author, 'license', attr.license, 'note', attr.note, 'created_at', attr.created_at)
+        ELSE NULL
+      END AS attribution_json
     FROM assets a
     LEFT JOIN asset_tags at3 ON at3.asset_id = a.id
     LEFT JOIN tags t ON t.id = at3.tag_id
+    LEFT JOIN attributions attr ON attr.id = a.attribution_id
     WHERE a.colors != '[]'
     GROUP BY a.id
   `
@@ -419,6 +469,83 @@ export function getAssetPaths(): string[] {
   const db = getDatabase()
   const rows = db.prepare(`SELECT path FROM assets`).all() as { path: string }[]
   return rows.map((r) => r.path)
+}
+
+// ── Attribution ─────────────────────────────────────────────────────
+
+export function getAttributions(): Attribution[] {
+  const db = getDatabase()
+  const rows = db
+    .prepare(`SELECT * FROM attributions ORDER BY created_at DESC`)
+    .all() as AttributionRow[]
+  return rows.map(rowToAttribution)
+}
+
+export function createAttribution(
+  data: Omit<Attribution, 'id' | 'createdAt'>
+): Attribution {
+  const db = getDatabase()
+  const id = uuidv4()
+  db.prepare(
+    `INSERT INTO attributions (id, url, author, license, note) VALUES (?, ?, ?, ?, ?)`
+  ).run(id, data.url ?? null, data.author, data.license ?? null, data.note ?? null)
+  const row = db.prepare(`SELECT * FROM attributions WHERE id = ?`).get(id) as AttributionRow
+  return rowToAttribution(row)
+}
+
+export function updateAttribution(
+  id: string,
+  data: Partial<Omit<Attribution, 'id' | 'createdAt'>>
+): Attribution {
+  const db = getDatabase()
+  const fields: string[] = []
+  const params: Record<string, unknown> = { id }
+  if (data.url !== undefined) { fields.push('url = @url'); params.url = data.url }
+  if (data.author !== undefined) { fields.push('author = @author'); params.author = data.author }
+  if (data.license !== undefined) { fields.push('license = @license'); params.license = data.license }
+  if (data.note !== undefined) { fields.push('note = @note'); params.note = data.note }
+  if (fields.length > 0) {
+    db.prepare(`UPDATE attributions SET ${fields.join(', ')} WHERE id = @id`).run(params)
+  }
+  const row = db.prepare(`SELECT * FROM attributions WHERE id = ?`).get(id) as AttributionRow
+  return rowToAttribution(row)
+}
+
+export function deleteAttribution(id: string): void {
+  const db = getDatabase()
+  db.prepare(`DELETE FROM attributions WHERE id = ?`).run(id)
+}
+
+export function setDirectoryAttribution(directoryPath: string, attributionId: string | null): void {
+  const db = getDatabase()
+  db.prepare(`UPDATE assets SET attribution_id = ? WHERE path LIKE ?`).run(
+    attributionId,
+    directoryPath + '/%'
+  )
+}
+
+/**
+ * Returns a map of directory path → Attribution for all directories that have
+ * at least one asset with an attribution assigned. Used by the sidebar to show
+ * which directories have an attribution configured.
+ */
+export function getDirectoryAttributionMap(): Record<string, Attribution> {
+  const db = getDatabase()
+  // Get one representative attribution per distinct parent directory
+  const rows = db
+    .prepare(
+      `
+    SELECT
+      SUBSTR(a.path, 1, LENGTH(a.path) - LENGTH(a.name) - LENGTH(a.ext) - 2) AS dir,
+      attr.id, attr.url, attr.author, attr.license, attr.note, attr.created_at
+    FROM assets a
+    JOIN attributions attr ON attr.id = a.attribution_id
+    GROUP BY dir
+  `
+    )
+    .all() as (AttributionRow & { dir: string })[]
+
+  return Object.fromEntries(rows.map((r) => [r.dir, rowToAttribution(r)]))
 }
 
 export function getTagAssetCounts(): Record<string, number> {
