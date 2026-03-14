@@ -1,0 +1,5 @@
+node_modules/
+.claude/
+assetvault/node_modules/
+assetvault/out/
+assetvault/dist/
