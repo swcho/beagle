@@ -20,11 +20,10 @@ const SIDEBAR_MAX = 400
 
 function App(): React.JSX.Element {
   const { assets, isLoading, fetchAssets, updateThumbnail } = useLibraryStore()
-  const [sidebarWidth, setSidebarWidth] = useState(208)
   const { fetchDirectories } = useFolderStore()
   const { query, types, tagIds, folderId, directory, colors, colorTolerance, sortBy, sortOrder } =
     useFilterStore()
-  const { selectedAssetId, setSelectedAssetId } = useUIStore()
+  const { selectedAssetId, setSelectedAssetId, sidebarWidth, setSidebarWidth } = useUIStore()
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [importing, setImporting] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()

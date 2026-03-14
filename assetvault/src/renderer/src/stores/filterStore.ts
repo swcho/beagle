@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 import type { AssetType } from '@shared/types'
 
@@ -28,8 +29,22 @@ const defaultFilter = {
   sortOrder: 'desc' as const
 }
 
-export const useFilterStore = create<FilterState>((set) => ({
-  ...defaultFilter,
-  setFilter: (partial) => set((state) => ({ ...state, ...partial })),
-  resetFilter: () => set(defaultFilter)
-}))
+export const useFilterStore = create<FilterState>()(
+  persist(
+    (set) => ({
+      ...defaultFilter,
+      setFilter: (partial) => set((state) => ({ ...state, ...partial })),
+      resetFilter: () => set(defaultFilter)
+    }),
+    {
+      name: 'asset-filter',
+      partialize: (state) => ({
+        types: state.types,
+        colors: state.colors,
+        colorTolerance: state.colorTolerance,
+        sortBy: state.sortBy,
+        sortOrder: state.sortOrder
+      })
+    }
+  )
+)
