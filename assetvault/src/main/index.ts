@@ -3,6 +3,9 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initializeDatabase } from './db/schema'
+
+// 개발 빌드 확인 후 종료 시 pkill -f "assetvault-dev" 로 정확히 타겟팅
+if (is.dev) process.title = 'assetvault-dev'
 import { registerLibraryHandlers } from './ipc/library'
 import { registerThumbnailHandlers } from './ipc/thumbnail'
 import { registerTagHandlers } from './ipc/tags'
