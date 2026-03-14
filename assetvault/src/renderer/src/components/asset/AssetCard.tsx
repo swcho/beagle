@@ -1,4 +1,5 @@
-import { FileImage, Music, Video, Type, Box, FileText, File } from 'lucide-react'
+import { useState } from 'react'
+import { FileImage, Music, Video, Type, Box, FileText, File, AlertTriangle } from 'lucide-react'
 import type { Asset, AssetType } from '../../../../shared/types'
 import { useUIStore } from '../../stores/uiStore'
 import { useHover } from '../../hooks/useHover'
@@ -54,6 +55,7 @@ export function AssetCard({ asset }: AssetCardProps): React.JSX.Element {
   const badge = TYPE_BADGE[assetType]
   const icon = TYPE_ICON[assetType] ?? <File size={32} className="text-zinc-500" />
   const hasThumbnail = asset.thumbnail && isFileThumbnail(asset.thumbnail)
+  const [imgError, setImgError] = useState(false)
 
   return (
     <>
@@ -74,13 +76,19 @@ export function AssetCard({ asset }: AssetCardProps): React.JSX.Element {
       >
         {/* 썸네일 영역 */}
         <div className="relative w-full aspect-square bg-zinc-700 flex items-center justify-center overflow-hidden">
-          {hasThumbnail ? (
+          {hasThumbnail && !imgError ? (
             <img
               src={`file://${asset.thumbnail}`}
               alt={asset.name}
               className="w-full h-full object-contain"
               loading="lazy"
+              onError={() => setImgError(true)}
             />
+          ) : imgError ? (
+            <div className="flex flex-col items-center gap-1 text-zinc-500">
+              <AlertTriangle size={24} className="text-amber-600" />
+              <span className="text-[10px]">파일 없음</span>
+            </div>
           ) : (
             icon
           )}

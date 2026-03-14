@@ -1,13 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { TopBar } from './components/layout/TopBar'
 import { Sidebar } from './components/layout/Sidebar'
 import { StatusBar } from './components/layout/StatusBar'
 import { MainGrid } from './components/asset/MainGrid'
 import { AssetDetail } from './components/asset/AssetDetail'
+import { Toast, type ToastItem } from './components/ui/Toast'
 import { useLibraryStore } from './stores/libraryStore'
 import { useFilterStore } from './stores/filterStore'
 import { useUIStore } from './stores/uiStore'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import type { ImportProgress } from '../../shared/types'
+
+let toastCounter = 0
+function makeToast(type: ToastItem['type'], message: string): ToastItem {
+  return { id: String(++toastCounter), type, message }
+}
 
 function App(): React.JSX.Element {
   const { assets, isLoading, fetchAssets, updateThumbnail } = useLibraryStore()
@@ -15,12 +22,21 @@ function App(): React.JSX.Element {
   const { selectedAssetId, setSelectedAssetId } = useUIStore()
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [importing, setImporting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [toasts, setToasts] = useState<ToastItem[]>([])
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) ?? null
+  const currentFilter = { query, types, tagIds, colors, colorTolerance, sortBy, sortOrder }
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
+  }, [])
+
+  const addToast = useCallback((type: ToastItem['type'], message: string) => {
+    setToasts((prev) => [...prev, makeToast(type, message)])
+  }, [])
 
   useEffect(() => {
-    fetchAssets({ query, types, tagIds, colors, colorTolerance, sortBy, sortOrder })
+    fetchAssets(currentFilter)
   }, [query, types, tagIds, colors, colorTolerance, sortBy, sortOrder])
 
   useEffect(() => {
@@ -41,37 +57,32 @@ function App(): React.JSX.Element {
     }
   }, [updateThumbnail])
 
-  async function handleImport(): Promise<void> {
-    setError(null)
+  const handleImport = useCallback(async (): Promise<void> => {
     try {
       const folder = await window.api.openFolderDialog()
       if (!folder) return
       setImporting(true)
       setProgress(null)
-      await window.api.importFolder(folder)
-      await fetchAssets({ query, types, tagIds, colors, colorTolerance, sortBy, sortOrder })
+      const result = await window.api.importFolder(folder)
+      await fetchAssets(currentFilter)
+      addToast('success', `${result.imported}개 임포트 완료${result.skipped ? ` (${result.skipped}개 건너뜀)` : ''}`)
     } catch (e) {
-      setError(e instanceof Error ? e.message : '임포트 중 오류가 발생했습니다.')
+      addToast('error', e instanceof Error ? e.message : '임포트 중 오류가 발생했습니다.')
     } finally {
       setImporting(false)
       setProgress(null)
     }
-  }
+  }, [currentFilter, fetchAssets, addToast])
+
+  useKeyboardShortcuts({ onImport: handleImport })
 
   async function handleAssetUpdate(): Promise<void> {
-    await fetchAssets({ query, types, tagIds, colors, colorTolerance, sortBy, sortOrder })
+    await fetchAssets(currentFilter)
   }
 
   return (
     <div className="flex flex-col h-screen bg-zinc-900 text-white overflow-hidden">
       <TopBar progress={progress} importing={importing} onImport={handleImport} />
-
-      {error && (
-        <div className="mx-4 mt-3 px-4 py-2 bg-red-900/50 border border-red-700 rounded text-red-300 text-sm shrink-0">
-          {error}
-          <button className="ml-3 text-red-400 hover:text-red-200" onClick={() => setError(null)}>✕</button>
-        </div>
-      )}
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
@@ -86,6 +97,7 @@ function App(): React.JSX.Element {
       </div>
 
       <StatusBar />
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

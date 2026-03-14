@@ -1,9 +1,10 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { FolderOpen } from 'lucide-react'
+import { FolderOpen, SearchX } from 'lucide-react'
 import type { Asset } from '../../../../shared/types'
 import { AssetCard } from './AssetCard'
 import { useUIStore } from '../../stores/uiStore'
+import { useFilterStore } from '../../stores/filterStore'
 
 interface MainGridProps {
   assets: Asset[]
@@ -14,6 +15,8 @@ interface MainGridProps {
 export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
   const { gridColumns, setGridColumns } = useUIStore()
+  const { query, types, tagIds, colors, resetFilter } = useFilterStore()
+  const hasActiveFilter = !!(query || types.length || tagIds.length || colors.length)
 
   // ResizeObserver로 컨테이너 너비 감지 → gridColumns 자동 계산
   useEffect(() => {
@@ -56,6 +59,20 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
   }
 
   if (assets.length === 0) {
+    if (hasActiveFilter) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-500">
+          <SearchX size={48} className="text-zinc-600" />
+          <p className="text-sm">검색 결과가 없습니다</p>
+          <button
+            onClick={resetFilter}
+            className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded text-sm font-medium transition-colors"
+          >
+            필터 초기화
+          </button>
+        </div>
+      )
+    }
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-500">
         <FolderOpen size={48} className="text-zinc-600" />
