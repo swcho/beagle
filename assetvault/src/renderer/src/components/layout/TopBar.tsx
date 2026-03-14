@@ -1,9 +1,10 @@
-import { useRef, useState, useEffect } from 'react'
 import { LayoutGrid, List, SortAsc, SortDesc, FolderOpen, X } from 'lucide-react'
-import { useFilterStore } from '../../stores/filterStore'
-import { useUIStore } from '../../stores/uiStore'
-import { useTagStore } from '../../stores/tagStore'
+import { useRef, useState, useEffect } from 'react'
+
 import type { ImportProgress } from '../../../../shared/types'
+import { useFilterStore } from '../../stores/filterStore'
+import { useTagStore } from '../../stores/tagStore'
+import { useUIStore } from '../../stores/uiStore'
 
 interface TopBarProps {
   progress: ImportProgress | null

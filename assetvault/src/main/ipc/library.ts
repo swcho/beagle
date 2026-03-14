@@ -1,11 +1,17 @@
-import { ipcMain, BrowserWindow, dialog } from 'electron'
+import { ipcMain, BrowserWindow, dialog, shell } from 'electron'
 import { v4 as uuidv4 } from 'uuid'
-import { scanDirectory, type ScannedFile } from '../services/scanner'
-import { upsertAsset, getAssets, getAssetById, deleteAssets } from '../db/queries'
-import { generateThumbnail } from '../services/thumbnailer'
-import { extractColors } from '../services/colorExtract'
-import { updateAssetThumbnail } from '../db/queries'
+
 import type { AssetFilter } from '../../shared/types'
+import {
+  upsertAsset,
+  getAssets,
+  getAssetById,
+  deleteAssets,
+  updateAssetThumbnail
+} from '../db/queries'
+import { extractColors } from '../services/colorExtract'
+import { scanDirectory, type ScannedFile } from '../services/scanner'
+import { generateThumbnail } from '../services/thumbnailer'
 
 const COLOR_EXTRACTABLE = new Set(['png', 'jpg', 'jpeg', 'webp', 'bmp'])
 
@@ -35,7 +41,7 @@ export function registerLibraryHandlers(mainWindow: BrowserWindow): void {
           height: file.height,
           duration: file.duration,
           createdAt: file.createdAt,
-          importedAt: now,
+          importedAt: now
         })
         imported++
       } catch {
@@ -45,7 +51,7 @@ export function registerLibraryHandlers(mainWindow: BrowserWindow): void {
       mainWindow.webContents.send('import-progress', {
         current: i + 1,
         total,
-        filename: file.name,
+        filename: file.name
       })
     }
 
@@ -62,7 +68,7 @@ export function registerLibraryHandlers(mainWindow: BrowserWindow): void {
         mainWindow.webContents.send('thumbnail-ready', {
           assetId: asset.id,
           thumbnailPath,
-          colors,
+          colors
         })
       } catch (err) {
         console.error(`썸네일 생성 실패 [${asset.name}]:`, err)
@@ -86,13 +92,12 @@ export function registerLibraryHandlers(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('open-folder-dialog', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
-      properties: ['openDirectory'],
+      properties: ['openDirectory']
     })
     return result.canceled ? null : result.filePaths[0]
   })
 
   ipcMain.handle('show-in-finder', (_event, filePath: string) => {
-    const { shell } = require('electron')
     shell.showItemInFolder(filePath)
   })
 }

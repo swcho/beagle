@@ -1,6 +1,7 @@
+import { join } from 'path'
+
 import Database from 'better-sqlite3'
 import { app } from 'electron'
-import { join } from 'path'
 
 let db: Database.Database | null = null
 

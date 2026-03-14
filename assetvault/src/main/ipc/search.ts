@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
-import { searchAssets, searchByColor, getAssets } from '../db/queries'
+
 import type { AssetFilter } from '../../shared/types'
+import { searchAssets, searchByColor, getAssets } from '../db/queries'
 
 export function registerSearchHandlers(): void {
   ipcMain.handle('search-assets', (_event, query: string) => searchAssets(query))
@@ -36,7 +37,12 @@ export function registerSearchHandlers(): void {
     // 후보 ID가 있으면 getAssets에 id 목록으로 전달
     if (candidateIds !== null) {
       if (candidateIds.size === 0) return []
-      return getAssets({ ...filter, query: undefined, colors: undefined, _ids: [...candidateIds] } as AssetFilter & { _ids?: string[] })
+      return getAssets({
+        ...filter,
+        query: undefined,
+        colors: undefined,
+        _ids: [...candidateIds]
+      } as AssetFilter & { _ids?: string[] })
     }
 
     return getAssets(filter)

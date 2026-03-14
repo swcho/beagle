@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+
 import { useLibraryStore } from '../stores/libraryStore'
 import { useUIStore } from '../stores/uiStore'
 
@@ -8,7 +9,8 @@ interface Options {
 
 export function useKeyboardShortcuts({ onImport }: Options): void {
   const { assets, removeAssets } = useLibraryStore()
-  const { selectedIds, selectedAssetId, selectAll, clearSelection, setSelectedAssetId } = useUIStore()
+  const { selectedIds, selectedAssetId, selectAll, clearSelection, setSelectedAssetId } =
+    useUIStore()
 
   useEffect(() => {
     async function handleKeyDown(e: KeyboardEvent): Promise<void> {
@@ -58,5 +60,14 @@ export function useKeyboardShortcuts({ onImport }: Options): void {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [assets, selectedIds, selectedAssetId, selectAll, clearSelection, setSelectedAssetId, removeAssets, onImport])
+  }, [
+    assets,
+    selectedIds,
+    selectedAssetId,
+    selectAll,
+    clearSelection,
+    setSelectedAssetId,
+    removeAssets,
+    onImport
+  ])
 }

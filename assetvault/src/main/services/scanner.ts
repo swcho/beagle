@@ -1,7 +1,9 @@
 import { promises as fs } from 'fs'
 import { join, extname, basename } from 'path'
-import sharp from 'sharp'
+
 import { parseFile } from 'music-metadata'
+import sharp from 'sharp'
+
 import { SUPPORTED_FORMATS } from '../../shared/types'
 
 export interface ScannedFile {
@@ -53,7 +55,7 @@ export async function* scanDirectory(dirPath: string): AsyncGenerator<ScannedFil
         name: basename(entry.name, extname(entry.name)),
         ext,
         size: stat.size,
-        createdAt: Math.floor(stat.birthtimeMs / 1000),
+        createdAt: Math.floor(stat.birthtimeMs / 1000)
       }
 
       if (IMAGE_EXTS.has(ext) && ext !== 'svg' && ext !== 'ico') {

@@ -1,11 +1,14 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+
 import type { Asset } from '../../../../../shared/types'
 
-interface Props { asset: Asset }
+interface Props {
+  asset: Asset
+}
 
 export function Model3DPreview({ asset }: Props): React.JSX.Element {
   const mountRef = useRef<HTMLDivElement>(null)
@@ -14,7 +17,8 @@ export function Model3DPreview({ asset }: Props): React.JSX.Element {
     const mount = mountRef.current
     if (!mount) return
 
-    const W = 300, H = 300
+    const W = 300,
+      H = 300
 
     // Scene
     const scene = new THREE.Scene()

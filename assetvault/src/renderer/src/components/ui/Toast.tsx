@@ -1,6 +1,6 @@
+import { X, AlertCircle, CheckCircle } from 'lucide-react'
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, AlertCircle, CheckCircle } from 'lucide-react'
 
 export interface ToastItem {
   id: string
@@ -24,7 +24,13 @@ export function Toast({ toasts, onDismiss }: Props): React.JSX.Element {
   )
 }
 
-function ToastItem({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: string) => void }): React.JSX.Element {
+function ToastItem({
+  toast,
+  onDismiss
+}: {
+  toast: ToastItem
+  onDismiss: (id: string) => void
+}): React.JSX.Element {
   useEffect(() => {
     const timer = setTimeout(() => onDismiss(toast.id), 4000)
     return () => clearTimeout(timer)
@@ -32,14 +38,16 @@ function ToastItem({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
 
   const styles = {
     success: 'bg-green-900/90 border-green-700 text-green-200',
-    error:   'bg-red-900/90 border-red-700 text-red-200',
-    info:    'bg-zinc-800/90 border-zinc-600 text-zinc-200',
+    error: 'bg-red-900/90 border-red-700 text-red-200',
+    info: 'bg-zinc-800/90 border-zinc-600 text-zinc-200'
   }
 
   const Icon = toast.type === 'success' ? CheckCircle : AlertCircle
 
   return (
-    <div className={`flex items-start gap-3 px-4 py-3 rounded-lg border shadow-xl max-w-sm text-sm ${styles[toast.type]}`}>
+    <div
+      className={`flex items-start gap-3 px-4 py-3 rounded-lg border shadow-xl max-w-sm text-sm ${styles[toast.type]}`}
+    >
       <Icon size={15} className="shrink-0 mt-0.5" />
       <span className="flex-1">{toast.message}</span>
       <button onClick={() => onDismiss(toast.id)} className="shrink-0 opacity-60 hover:opacity-100">

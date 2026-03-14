@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+
 import type { Asset } from '../../../../../shared/types'
 
-interface Props { asset: Asset }
+interface Props {
+  asset: Asset
+}
 
 const SAMPLE_SIZES = [12, 18, 28, 40]
 const SAMPLE_TEXT = 'Aa 가나다 AaBbCc 0123'
@@ -14,7 +17,8 @@ export function FontPreview({ asset }: Props): React.JSX.Element {
     const family = `preview-${asset.id}`
     const font = new FontFace(family, `url("local-file://${asset.path}")`)
 
-    font.load()
+    font
+      .load()
       .then((loadedFont) => {
         document.fonts.add(loadedFont)
         setFontFamily(family)

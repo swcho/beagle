@@ -1,26 +1,29 @@
-import { useEffect, useRef, useState } from 'react'
 import { Tag, Trash2, Palette } from 'lucide-react'
-import { useTagStore } from '../../stores/tagStore'
+import { useEffect, useRef, useState } from 'react'
+
 import { useFilterStore } from '../../stores/filterStore'
+import { useTagStore } from '../../stores/tagStore'
 
 const PRESET_COLORS = [
-  { label: '빨강',   hex: '#ef4444' },
-  { label: '주황',   hex: '#f97316' },
-  { label: '노랑',   hex: '#eab308' },
-  { label: '초록',   hex: '#22c55e' },
-  { label: '파랑',   hex: '#3b82f6' },
-  { label: '남색',   hex: '#6366f1' },
-  { label: '보라',   hex: '#a855f7' },
-  { label: '분홍',   hex: '#ec4899' },
-  { label: '흰색',   hex: '#f4f4f5' },
-  { label: '회색',   hex: '#71717a' },
-  { label: '검정',   hex: '#18181b' },
+  { label: '빨강', hex: '#ef4444' },
+  { label: '주황', hex: '#f97316' },
+  { label: '노랑', hex: '#eab308' },
+  { label: '초록', hex: '#22c55e' },
+  { label: '파랑', hex: '#3b82f6' },
+  { label: '남색', hex: '#6366f1' },
+  { label: '보라', hex: '#a855f7' },
+  { label: '분홍', hex: '#ec4899' },
+  { label: '흰색', hex: '#f4f4f5' },
+  { label: '회색', hex: '#71717a' },
+  { label: '검정', hex: '#18181b' }
 ]
 
 export function Sidebar(): React.JSX.Element {
   const { tags, tagCounts, fetchTags, deleteTag } = useTagStore()
   const { tagIds, colors, colorTolerance, setFilter } = useFilterStore()
-  const [contextMenu, setContextMenu] = useState<{ tagId: string; x: number; y: number } | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ tagId: string; x: number; y: number } | null>(
+    null
+  )
   const contextRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -28,22 +31,20 @@ export function Sidebar(): React.JSX.Element {
   }, [fetchTags])
 
   useEffect(() => {
-    function handleClick(): void { setContextMenu(null) }
+    function handleClick(): void {
+      setContextMenu(null)
+    }
     window.addEventListener('click', handleClick)
     return () => window.removeEventListener('click', handleClick)
   }, [])
 
   function toggleTagFilter(tagId: string): void {
-    const next = tagIds.includes(tagId)
-      ? tagIds.filter((id) => id !== tagId)
-      : [...tagIds, tagId]
+    const next = tagIds.includes(tagId) ? tagIds.filter((id) => id !== tagId) : [...tagIds, tagId]
     setFilter({ tagIds: next })
   }
 
   function toggleColorFilter(hex: string): void {
-    const next = colors.includes(hex)
-      ? colors.filter((c) => c !== hex)
-      : [...colors, hex]
+    const next = colors.includes(hex) ? colors.filter((c) => c !== hex) : [...colors, hex]
     setFilter({ colors: next })
   }
 

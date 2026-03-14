@@ -19,13 +19,16 @@ export function useHover(delay = 300): UseHoverReturn {
   const [hoverState, setHoverState] = useState<HoverState>({ isHovered: false, x: 0, y: 0 })
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const onMouseEnter = useCallback((e: React.MouseEvent) => {
-    const x = e.clientX
-    const y = e.clientY
-    timerRef.current = setTimeout(() => {
-      setHoverState({ isHovered: true, x, y })
-    }, delay)
-  }, [delay])
+  const onMouseEnter = useCallback(
+    (e: React.MouseEvent) => {
+      const x = e.clientX
+      const y = e.clientY
+      timerRef.current = setTimeout(() => {
+        setHoverState({ isHovered: true, x, y })
+      }, delay)
+    },
+    [delay]
+  )
 
   const onMouseLeave = useCallback(() => {
     if (timerRef.current) {
@@ -36,9 +39,7 @@ export function useHover(delay = 300): UseHoverReturn {
   }, [])
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
-    setHoverState((prev) =>
-      prev.isHovered ? { ...prev, x: e.clientX, y: e.clientY } : prev
-    )
+    setHoverState((prev) => (prev.isHovered ? { ...prev, x: e.clientX, y: e.clientY } : prev))
   }, [])
 
   return { hoverState, hoverProps: { onMouseEnter, onMouseLeave, onMouseMove } }

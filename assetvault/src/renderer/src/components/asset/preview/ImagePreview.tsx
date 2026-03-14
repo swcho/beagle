@@ -1,6 +1,8 @@
 import type { Asset } from '../../../../../shared/types'
 
-interface Props { asset: Asset }
+interface Props {
+  asset: Asset
+}
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -16,7 +18,11 @@ export function ImagePreview({ asset }: Props): React.JSX.Element {
         className="w-full max-h-72 object-contain rounded"
       />
       <div className="flex gap-3 text-xs text-zinc-400 px-1">
-        {asset.width && <span>{asset.width} × {asset.height}px</span>}
+        {asset.width && (
+          <span>
+            {asset.width} × {asset.height}px
+          </span>
+        )}
         <span>{formatBytes(asset.size)}</span>
       </div>
     </div>

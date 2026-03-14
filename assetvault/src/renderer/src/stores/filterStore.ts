@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+
 import type { AssetType } from '../../../shared/types'
 
 interface FilterState {
@@ -20,11 +21,11 @@ const defaultFilter = {
   colors: [] as string[],
   colorTolerance: 0.25,
   sortBy: 'importedAt' as const,
-  sortOrder: 'desc' as const,
+  sortOrder: 'desc' as const
 }
 
 export const useFilterStore = create<FilterState>((set) => ({
   ...defaultFilter,
   setFilter: (partial) => set((state) => ({ ...state, ...partial })),
-  resetFilter: () => set(defaultFilter),
+  resetFilter: () => set(defaultFilter)
 }))

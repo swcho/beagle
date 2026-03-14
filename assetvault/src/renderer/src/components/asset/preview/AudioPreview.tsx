@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
 import { Play, Pause } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+
 import type { Asset } from '../../../../../shared/types'
 
-interface Props { asset: Asset }
+interface Props {
+  asset: Asset
+}
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60)
@@ -48,7 +51,8 @@ export function AudioPreview({ asset }: Props): React.JSX.Element {
         ctx!.beginPath()
 
         for (let i = 0; i < w; i++) {
-          let min = 1, max = -1
+          let min = 1,
+            max = -1
           for (let j = 0; j < step; j++) {
             const datum = data[i * step + j] ?? 0
             if (datum < min) min = datum

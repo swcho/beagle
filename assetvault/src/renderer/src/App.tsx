@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useState } from 'react'
-import { TopBar } from './components/layout/TopBar'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+
+import type { ImportProgress } from '../../shared/types'
+
+import { AssetDetail } from './components/asset/AssetDetail'
+import { MainGrid } from './components/asset/MainGrid'
 import { Sidebar } from './components/layout/Sidebar'
 import { StatusBar } from './components/layout/StatusBar'
-import { MainGrid } from './components/asset/MainGrid'
-import { AssetDetail } from './components/asset/AssetDetail'
+import { TopBar } from './components/layout/TopBar'
 import { Toast, type ToastItem } from './components/ui/Toast'
-import { useLibraryStore } from './stores/libraryStore'
-import { useFilterStore } from './stores/filterStore'
-import { useUIStore } from './stores/uiStore'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
-import type { ImportProgress } from '../../shared/types'
+import { useFilterStore } from './stores/filterStore'
+import { useLibraryStore } from './stores/libraryStore'
+import { useUIStore } from './stores/uiStore'
 
 let toastCounter = 0
 function makeToast(type: ToastItem['type'], message: string): ToastItem {
@@ -25,7 +27,10 @@ function App(): React.JSX.Element {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) ?? null
-  const currentFilter = { query, types, tagIds, colors, colorTolerance, sortBy, sortOrder }
+  const currentFilter = useMemo(
+    () => ({ query, types, tagIds, colors, colorTolerance, sortBy, sortOrder }),
+    [query, types, tagIds, colors, colorTolerance, sortBy, sortOrder]
+  )
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
@@ -37,15 +42,21 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     fetchAssets(currentFilter)
-  }, [query, types, tagIds, colors, colorTolerance, sortBy, sortOrder])
+  }, [currentFilter, fetchAssets])
 
   useEffect(() => {
     const onProgress = (...args: unknown[]): void => {
       setProgress(args[0] as ImportProgress)
     }
     const onThumbnail = (...args: unknown[]): void => {
-      const { assetId, thumbnailPath, colors: c } = args[0] as {
-        assetId: string; thumbnailPath: string; colors: string[]
+      const {
+        assetId,
+        thumbnailPath,
+        colors: c
+      } = args[0] as {
+        assetId: string
+        thumbnailPath: string
+        colors: string[]
       }
       updateThumbnail(assetId, thumbnailPath, c)
     }
@@ -65,7 +76,10 @@ function App(): React.JSX.Element {
       setProgress(null)
       const result = await window.api.importFolder(folder)
       await fetchAssets(currentFilter)
-      addToast('success', `${result.imported}개 임포트 완료${result.skipped ? ` (${result.skipped}개 건너뜀)` : ''}`)
+      addToast(
+        'success',
+        `${result.imported}개 임포트 완료${result.skipped ? ` (${result.skipped}개 건너뜀)` : ''}`
+      )
     } catch (e) {
       addToast('error', e instanceof Error ? e.message : '임포트 중 오류가 발생했습니다.')
     } finally {

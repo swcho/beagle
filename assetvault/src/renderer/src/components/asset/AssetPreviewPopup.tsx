@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
+
 import type { Asset } from '../../../../shared/types'
-import { ImagePreview } from './preview/ImagePreview'
+
 import { AudioPreview } from './preview/AudioPreview'
 import { FontPreview } from './preview/FontPreview'
-import { VideoPreview } from './preview/VideoPreview'
+import { ImagePreview } from './preview/ImagePreview'
 import { Model3DPreview } from './preview/Model3DPreview'
+import { VideoPreview } from './preview/VideoPreview'
 
 interface Props {
   asset: Asset
@@ -18,11 +20,11 @@ const POPUP_MAX_H = 420
 const OFFSET = 16
 
 const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'webp', 'bmp', 'ico'])
-const GIF_EXTS   = new Set(['gif'])
-const SVG_EXTS   = new Set(['svg'])
+const GIF_EXTS = new Set(['gif'])
+const SVG_EXTS = new Set(['svg'])
 const AUDIO_EXTS = new Set(['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'])
 const VIDEO_EXTS = new Set(['mp4', 'webm', 'mov'])
-const FONT_EXTS  = new Set(['ttf', 'otf', 'woff', 'woff2'])
+const FONT_EXTS = new Set(['ttf', 'otf', 'woff', 'woff2'])
 const MODEL_EXTS = new Set(['obj', 'glb', 'gltf'])
 
 function PreviewContent({ asset }: { asset: Asset }): React.JSX.Element {
@@ -33,35 +35,28 @@ function PreviewContent({ asset }: { asset: Asset }): React.JSX.Element {
   }
   if (AUDIO_EXTS.has(ext)) return <AudioPreview asset={asset} />
   if (VIDEO_EXTS.has(ext)) return <VideoPreview asset={asset} />
-  if (FONT_EXTS.has(ext))  return <FontPreview asset={asset} />
+  if (FONT_EXTS.has(ext)) return <FontPreview asset={asset} />
   if (MODEL_EXTS.has(ext)) return <Model3DPreview asset={asset} />
 
-  return (
-    <div className="p-4 text-zinc-400 text-sm">
-      미리보기를 지원하지 않는 형식입니다.
-    </div>
-  )
+  return <div className="p-4 text-zinc-400 text-sm">미리보기를 지원하지 않는 형식입니다.</div>
 }
 
 export function AssetPreviewPopup({ asset, x, y }: Props): React.JSX.Element {
   const popupRef = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState({ left: x + OFFSET, top: y })
 
-  useEffect(() => {
+  const { left, top } = useMemo(() => {
     const vw = window.innerWidth
     const vh = window.innerHeight
     let left = x + OFFSET
     let top = y - POPUP_MAX_H / 2
 
     // 오른쪽 공간 부족 → 왼쪽 flip
-    if (left + POPUP_W > vw - 8) {
-      left = x - POPUP_W - OFFSET
-    }
+    if (left + POPUP_W > vw - 8) left = x - POPUP_W - OFFSET
     // 세로 클리핑 방지
     if (top < 8) top = 8
     if (top + POPUP_MAX_H > vh - 8) top = vh - POPUP_MAX_H - 8
 
-    setPos({ left, top })
+    return { left, top }
   }, [x, y])
 
   return createPortal(
@@ -69,15 +64,17 @@ export function AssetPreviewPopup({ asset, x, y }: Props): React.JSX.Element {
       ref={popupRef}
       style={{
         position: 'fixed',
-        left: pos.left,
-        top: pos.top,
+        left,
+        top,
         width: POPUP_W,
         maxHeight: POPUP_MAX_H,
-        zIndex: 9999,
+        zIndex: 9999
       }}
       className="bg-zinc-800 border border-zinc-700 rounded-xl shadow-2xl overflow-y-auto p-3"
     >
-      <p className="text-xs font-medium text-zinc-300 truncate mb-2 px-1">{asset.name}.{asset.ext}</p>
+      <p className="text-xs font-medium text-zinc-300 truncate mb-2 px-1">
+        {asset.name}.{asset.ext}
+      </p>
       <PreviewContent asset={asset} />
     </div>,
     document.body

@@ -1,7 +1,9 @@
 import { promises as fs } from 'fs'
 import { join } from 'path'
-import sharp from 'sharp'
+
 import { app } from 'electron'
+import sharp from 'sharp'
+
 import type { Asset } from '../../shared/types'
 
 const THUMB_SIZE = 200

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
 import { X, FolderOpen, Tag as TagIcon } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+
 import type { Asset, Tag } from '../../../../shared/types'
 import { useTagStore } from '../../stores/tagStore'
 
@@ -16,7 +17,9 @@ function formatBytes(bytes: number): string {
 
 function formatDate(ts: number): string {
   return new Date(ts * 1000).toLocaleDateString('ko-KR', {
-    year: 'numeric', month: 'short', day: 'numeric',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   })
 }
 
@@ -26,7 +29,6 @@ function isFileThumbnail(path: string): boolean {
 
 export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX.Element {
   const { tags, fetchTags, createTag, updateAssetTags } = useTagStore()
-  const [assetTags, setAssetTags] = useState<Tag[]>(asset.tags)
   const [tagInput, setTagInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -35,28 +37,27 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
     fetchTags()
   }, [fetchTags])
 
-  useEffect(() => {
-    setAssetTags(asset.tags)
-  }, [asset.id, asset.tags])
-
   const suggestions = tags.filter(
-    (t) => t.name.toLowerCase().includes(tagInput.toLowerCase()) &&
-           !assetTags.some((at) => at.id === t.id)
+    (t) =>
+      t.name.toLowerCase().includes(tagInput.toLowerCase()) &&
+      !asset.tags.some((at) => at.id === t.id)
   )
 
   async function addTag(tag: Tag): Promise<void> {
-    const next = [...assetTags, tag]
-    setAssetTags(next)
     setTagInput('')
     setShowSuggestions(false)
-    await updateAssetTags(asset.id, next.map((t) => t.id))
+    await updateAssetTags(
+      asset.id,
+      [...asset.tags, tag].map((t) => t.id)
+    )
     onAssetUpdate()
   }
 
   async function removeTag(tagId: string): Promise<void> {
-    const next = assetTags.filter((t) => t.id !== tagId)
-    setAssetTags(next)
-    await updateAssetTags(asset.id, next.map((t) => t.id))
+    await updateAssetTags(
+      asset.id,
+      asset.tags.filter((t) => t.id !== tagId).map((t) => t.id)
+    )
     onAssetUpdate()
   }
 
@@ -106,7 +107,9 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
         {/* 파일명 */}
         <div>
           <p className="text-xs text-zinc-500 mb-1">파일명</p>
-          <p className="text-sm text-zinc-200 break-all">{asset.name}.{asset.ext}</p>
+          <p className="text-sm text-zinc-200 break-all">
+            {asset.name}.{asset.ext}
+          </p>
         </div>
 
         {/* 메타데이터 */}
@@ -118,7 +121,9 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
           {asset.width && (
             <div className="flex justify-between">
               <span className="text-zinc-500">해상도</span>
-              <span className="text-zinc-300">{asset.width} × {asset.height}px</span>
+              <span className="text-zinc-300">
+                {asset.width} × {asset.height}px
+              </span>
             </div>
           )}
           {asset.duration && (
@@ -133,7 +138,9 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
           </div>
           <div className="flex flex-col gap-1 mt-1">
             <span className="text-zinc-500">경로</span>
-            <span className="text-zinc-400 break-all text-[10px] leading-relaxed">{asset.path}</span>
+            <span className="text-zinc-400 break-all text-[10px] leading-relaxed">
+              {asset.path}
+            </span>
           </div>
         </div>
 
@@ -162,7 +169,7 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
 
           {/* 현재 태그 목록 */}
           <div className="flex flex-wrap gap-1.5 mb-2">
-            {assetTags.map((tag) => (
+            {asset.tags.map((tag) => (
               <button
                 key={tag.id}
                 onClick={() => removeTag(tag.id)}

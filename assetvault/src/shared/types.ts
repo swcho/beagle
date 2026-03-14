@@ -81,7 +81,7 @@ export const SUPPORTED_FORMATS = {
   video: ['mp4', 'webm', 'mov'],
   font: ['ttf', 'otf', 'woff', 'woff2'],
   model3d: ['obj', 'glb', 'gltf'],
-  doc: ['pdf'],
+  doc: ['pdf']
 } as const
 
 export type AssetType = keyof typeof SUPPORTED_FORMATS

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+
 import type { Tag } from '../../../shared/types'
 
 interface TagState {
@@ -17,7 +18,7 @@ export const useTagStore = create<TagState>((set) => ({
   fetchTags: async () => {
     const [tags, tagCounts] = await Promise.all([
       window.api.getTags(),
-      window.api.getTagAssetCounts(),
+      window.api.getTagAssetCounts()
     ])
     set({ tags, tagCounts })
   },
@@ -32,9 +33,7 @@ export const useTagStore = create<TagState>((set) => ({
     await window.api.deleteTag(id)
     set((state) => ({
       tags: state.tags.filter((t) => t.id !== id),
-      tagCounts: Object.fromEntries(
-        Object.entries(state.tagCounts).filter(([k]) => k !== id)
-      ),
+      tagCounts: Object.fromEntries(Object.entries(state.tagCounts).filter(([k]) => k !== id))
     }))
   },
 
@@ -42,5 +41,5 @@ export const useTagStore = create<TagState>((set) => ({
     await window.api.updateAssetTags(assetId, tagIds)
     const tagCounts = await window.api.getTagAssetCounts()
     set({ tagCounts })
-  },
+  }
 }))

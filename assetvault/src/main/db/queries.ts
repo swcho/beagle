@@ -1,5 +1,9 @@
+import { v4 as uuidv4 } from 'uuid'
+
+import { SUPPORTED_FORMATS } from '../../shared/types'
+import type { Asset, AssetFilter, Tag } from '../../shared/types'
+
 import { getDatabase } from './schema'
-import type { Asset, Tag, AssetFilter } from '../../shared/types'
 
 interface AssetRow {
   id: string
@@ -45,15 +49,14 @@ function rowToAsset(row: AssetRow): Asset {
     colors,
     tags,
     createdAt: row.created_at,
-    importedAt: row.imported_at,
+    importedAt: row.imported_at
   }
 }
 
-export function upsertAsset(
-  asset: Omit<Asset, 'tags' | 'colors'> & { colors?: string[] }
-): void {
+export function upsertAsset(asset: Omit<Asset, 'tags' | 'colors'> & { colors?: string[] }): void {
   const db = getDatabase()
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO assets (id, path, name, ext, size, width, height, duration, thumbnail, colors, created_at, imported_at)
     VALUES (@id, @path, @name, @ext, @size, @width, @height, @duration, @thumbnail, @colors, @createdAt, @importedAt)
     ON CONFLICT(path) DO UPDATE SET
@@ -64,7 +67,8 @@ export function upsertAsset(
       height     = excluded.height,
       duration   = excluded.duration,
       created_at = excluded.created_at
-  `).run({
+  `
+  ).run({
     id: asset.id,
     path: asset.path,
     name: asset.name,
@@ -76,25 +80,28 @@ export function upsertAsset(
     thumbnail: asset.thumbnail ?? null,
     colors: JSON.stringify(asset.colors ?? []),
     createdAt: asset.createdAt,
-    importedAt: asset.importedAt,
+    importedAt: asset.importedAt
   })
 
   // FTS 인덱스 업데이트
-  const row = db.prepare(`SELECT rowid FROM assets WHERE id = ?`).get(asset.id) as { rowid: number } | undefined
+  const row = db.prepare(`SELECT rowid FROM assets WHERE id = ?`).get(asset.id) as
+    | { rowid: number }
+    | undefined
   if (row) {
-    db.prepare(`INSERT OR REPLACE INTO assets_fts(rowid, name) VALUES (?, ?)`).run(row.rowid, asset.name)
+    db.prepare(`INSERT OR REPLACE INTO assets_fts(rowid, name) VALUES (?, ?)`).run(
+      row.rowid,
+      asset.name
+    )
   }
 }
 
-export function updateAssetThumbnail(
-  id: string,
-  thumbnail: string,
-  colors: string[]
-): void {
+export function updateAssetThumbnail(id: string, thumbnail: string, colors: string[]): void {
   const db = getDatabase()
-  db.prepare(`
+  db.prepare(
+    `
     UPDATE assets SET thumbnail = ?, colors = ? WHERE id = ?
-  `).run(thumbnail, JSON.stringify(colors), id)
+  `
+  ).run(thumbnail, JSON.stringify(colors), id)
 }
 
 export function getAssets(filter: AssetFilter & { _ids?: string[] }): Asset[] {
@@ -106,15 +113,18 @@ export function getAssets(filter: AssetFilter & { _ids?: string[] }): Asset[] {
   // 검색 결과 ID 목록 제한
   if (filter._ids && filter._ids.length > 0) {
     const placeholders = filter._ids.map((_, i) => `@_id${i}`).join(', ')
-    filter._ids.forEach((id, i) => { params[`_id${i}`] = id })
+    filter._ids.forEach((id, i) => {
+      params[`_id${i}`] = id
+    })
     conditions.push(`a.id IN (${placeholders})`)
   }
 
   if (filter.types && filter.types.length > 0) {
-    const { SUPPORTED_FORMATS } = require('../../shared/types')
-    const exts = filter.types.flatMap((t) => SUPPORTED_FORMATS[t] as string[])
+    const exts = filter.types.flatMap((t) => SUPPORTED_FORMATS[t] as readonly string[])
     const placeholders = exts.map((_, i) => `@ext${i}`).join(', ')
-    exts.forEach((e, i) => { params[`ext${i}`] = e })
+    exts.forEach((e, i) => {
+      params[`ext${i}`] = e
+    })
     conditions.push(`a.ext IN (${placeholders})`)
   }
 
@@ -127,7 +137,9 @@ export function getAssets(filter: AssetFilter & { _ids?: string[] }): Asset[] {
 
   if (filter.tagIds && filter.tagIds.length > 0) {
     const placeholders = filter.tagIds.map((_, i) => `@tagId${i}`).join(', ')
-    filter.tagIds.forEach((id, i) => { params[`tagId${i}`] = id })
+    filter.tagIds.forEach((id, i) => {
+      params[`tagId${i}`] = id
+    })
     conditions.push(`EXISTS (
       SELECT 1 FROM asset_tags at2 WHERE at2.asset_id = a.id AND at2.tag_id IN (${placeholders})
     )`)
@@ -139,7 +151,7 @@ export function getAssets(filter: AssetFilter & { _ids?: string[] }): Asset[] {
     name: 'a.name',
     size: 'a.size',
     createdAt: 'a.created_at',
-    importedAt: 'a.imported_at',
+    importedAt: 'a.imported_at'
   }
   const sortBy = sortColumn[filter.sortBy ?? 'importedAt'] ?? 'a.imported_at'
   const sortOrder = filter.sortOrder === 'asc' ? 'ASC' : 'DESC'
@@ -171,7 +183,9 @@ export function getAssets(filter: AssetFilter & { _ids?: string[] }): Asset[] {
 
 export function getAssetById(id: string): Asset | null {
   const db = getDatabase()
-  const row = db.prepare(`
+  const row = db
+    .prepare(
+      `
     SELECT
       a.*,
       json_group_array(
@@ -185,7 +199,9 @@ export function getAssetById(id: string): Asset | null {
     LEFT JOIN tags t ON t.id = at3.tag_id
     WHERE a.id = ?
     GROUP BY a.id
-  `).get(id) as AssetRow | undefined
+  `
+    )
+    .get(id) as AssetRow | undefined
 
   return row ? rowToAsset(row) : null
 }
@@ -205,7 +221,6 @@ export function getTags(): Tag[] {
 
 export function createTag(name: string, color: string): Tag {
   const db = getDatabase()
-  const { v4: uuidv4 } = require('uuid')
   const id = uuidv4()
   db.prepare(`INSERT INTO tags (id, name, color) VALUES (?, ?, ?)`).run(id, name, color)
   return { id, name, color }
@@ -221,7 +236,10 @@ export function updateAssetTags(assetId: string, tagIds: string[]): void {
   const update = db.transaction(() => {
     db.prepare(`DELETE FROM asset_tags WHERE asset_id = ?`).run(assetId)
     for (const tagId of tagIds) {
-      db.prepare(`INSERT OR IGNORE INTO asset_tags (asset_id, tag_id) VALUES (?, ?)`).run(assetId, tagId)
+      db.prepare(`INSERT OR IGNORE INTO asset_tags (asset_id, tag_id) VALUES (?, ?)`).run(
+        assetId,
+        tagId
+      )
     }
   })
   update()
@@ -236,9 +254,14 @@ export function searchAssets(query: string): Asset[] {
   const escaped = query.replace(/['"*]/g, ' ').trim()
   if (!escaped) return []
 
-  const ftsQuery = escaped.split(/\s+/).map((w) => `"${w}"*`).join(' ')
+  const ftsQuery = escaped
+    .split(/\s+/)
+    .map((w) => `"${w}"*`)
+    .join(' ')
 
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT
       a.*,
       json_group_array(
@@ -255,7 +278,9 @@ export function searchAssets(query: string): Asset[] {
     GROUP BY a.id
     ORDER BY rank
     LIMIT 200
-  `).all(ftsQuery) as AssetRow[]
+  `
+    )
+    .all(ftsQuery) as AssetRow[]
 
   return rows.map(rowToAsset)
 }
@@ -264,7 +289,8 @@ function hexToHsl(hex: string): [number, number, number] {
   const r = parseInt(hex.slice(1, 3), 16) / 255
   const g = parseInt(hex.slice(3, 5), 16) / 255
   const b = parseInt(hex.slice(5, 7), 16) / 255
-  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b)
   const l = (max + min) / 2
   if (max === min) return [0, 0, l]
   const d = max - min
@@ -287,7 +313,9 @@ export function searchByColor(hex: string, tolerance: number): Asset[] {
   const db = getDatabase()
   const target = hexToHsl(hex)
 
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT
       a.*,
       json_group_array(
@@ -301,22 +329,29 @@ export function searchByColor(hex: string, tolerance: number): Asset[] {
     LEFT JOIN tags t ON t.id = at3.tag_id
     WHERE a.colors != '[]'
     GROUP BY a.id
-  `).all() as AssetRow[]
-
-  return rows
-    .map(rowToAsset)
-    .filter((asset) =>
-      asset.colors.some((c) => {
-        try { return hslDistance(hexToHsl(c), target) <= tolerance }
-        catch { return false }
-      })
+  `
     )
+    .all() as AssetRow[]
+
+  return rows.map(rowToAsset).filter((asset) =>
+    asset.colors.some((c) => {
+      try {
+        return hslDistance(hexToHsl(c), target) <= tolerance
+      } catch {
+        return false
+      }
+    })
+  )
 }
 
 export function getTagAssetCounts(): Record<string, number> {
   const db = getDatabase()
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT tag_id, COUNT(*) as cnt FROM asset_tags GROUP BY tag_id
-  `).all() as { tag_id: string; cnt: number }[]
+  `
+    )
+    .all() as { tag_id: string; cnt: number }[]
   return Object.fromEntries(rows.map((r) => [r.tag_id, r.cnt]))
 }

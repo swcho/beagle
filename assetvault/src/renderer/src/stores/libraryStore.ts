@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+
 import type { Asset, AssetFilter } from '../../../shared/types'
 
 interface LibraryState {
@@ -18,7 +19,8 @@ export const useLibraryStore = create<LibraryState>((set) => ({
   fetchAssets: async (filter: AssetFilter) => {
     set({ isLoading: true })
     try {
-      const needsCombined = (filter.query && filter.query.trim()) || (filter.colors && filter.colors.length > 0)
+      const needsCombined =
+        (filter.query && filter.query.trim()) || (filter.colors && filter.colors.length > 0)
       const assets = needsCombined
         ? await window.api.searchCombined(filter)
         : await window.api.getAssets(filter)
@@ -33,7 +35,7 @@ export const useLibraryStore = create<LibraryState>((set) => ({
     await window.api.removeAssets(ids)
     set((state) => ({
       assets: state.assets.filter((a) => !ids.includes(a.id)),
-      totalCount: state.totalCount - ids.length,
+      totalCount: state.totalCount - ids.length
     }))
   },
 
@@ -41,7 +43,7 @@ export const useLibraryStore = create<LibraryState>((set) => ({
     set((state) => ({
       assets: state.assets.map((a) =>
         a.id === assetId ? { ...a, thumbnail: thumbnailPath, colors } : a
-      ),
+      )
     }))
-  },
+  }
 }))

@@ -1,10 +1,12 @@
-import { useRef, useEffect, useMemo } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { FolderOpen, SearchX } from 'lucide-react'
+import { useRef, useEffect, useMemo } from 'react'
+
 import type { Asset } from '../../../../shared/types'
-import { AssetCard } from './AssetCard'
-import { useUIStore } from '../../stores/uiStore'
 import { useFilterStore } from '../../stores/filterStore'
+import { useUIStore } from '../../stores/uiStore'
+
+import { AssetCard } from './AssetCard'
 
 interface MainGridProps {
   assets: Asset[]
@@ -43,11 +45,12 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
     return result
   }, [assets, gridColumns])
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
     estimateSize: () => 180,
-    overscan: 3,
+    overscan: 3
   })
 
   if (isLoading) {
@@ -89,9 +92,7 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
 
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto p-3">
-      <div
-        style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}
-      >
+      <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const row = rows[virtualRow.index]
           return (
@@ -105,7 +106,7 @@ export function MainGrid({ assets, isLoading, onImport }: MainGridProps): React.
                 display: 'grid',
                 gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))`,
                 gap: '8px',
-                paddingBottom: '8px',
+                paddingBottom: '8px'
               }}
             >
               {row.map((asset) => (

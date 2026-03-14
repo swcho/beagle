@@ -1,7 +1,8 @@
 import { ipcMain, BrowserWindow } from 'electron'
+
 import { getAssetById, updateAssetThumbnail } from '../db/queries'
-import { generateThumbnail } from '../services/thumbnailer'
 import { extractColors } from '../services/colorExtract'
+import { generateThumbnail } from '../services/thumbnailer'
 
 const COLOR_EXTRACTABLE = new Set(['png', 'jpg', 'jpeg', 'webp', 'bmp'])
 
@@ -24,7 +25,7 @@ export function registerThumbnailHandlers(mainWindow: BrowserWindow): void {
         mainWindow.webContents.send('thumbnail-ready', {
           assetId,
           thumbnailPath,
-          colors,
+          colors
         })
       } catch (err) {
         console.error(`썸네일 생성 실패 [${asset.name}]:`, err)

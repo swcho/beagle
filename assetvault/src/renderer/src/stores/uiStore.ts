@@ -38,5 +38,5 @@ export const useUIStore = create<UIState>((set) => ({
 
   setGridColumns: (cols) => set({ gridColumns: cols }),
 
-  setSelectedAssetId: (id) => set({ selectedAssetId: id }),
+  setSelectedAssetId: (id) => set({ selectedAssetId: id })
 }))
