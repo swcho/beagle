@@ -36,6 +36,10 @@ export default defineConfig(
     rules: {
       ...eslintPluginReactHooks.configs.recommended.rules,
       ...eslintPluginReactRefresh.configs.vite.rules,
+      'react/no-unknown-property': [
+        'error',
+        { ignore: ['object', 'attach', 'args', 'intensity', 'position'] }
+      ],
       'import-x/no-unresolved': 'error',
       'import-x/no-duplicates': 'warn',
       'import-x/order': [
