@@ -162,10 +162,10 @@ export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.E
             </span>
 
             {/* 파일명 */}
-            <p className="flex-1 text-sm text-zinc-300 truncate">{asset.name}</p>
+            <p className="flex-1 text-sm text-zinc-300 truncate font-mono">{asset.name}</p>
 
             {/* 확장자 */}
-            <span className="shrink-0 text-xs text-zinc-500 w-12 text-right">.{asset.ext}</span>
+            <span className="shrink-0 text-xs text-zinc-500 w-12 text-right font-mono">.{asset.ext}</span>
 
             {/* 파일 크기 */}
             <span className="shrink-0 text-xs text-zinc-500 w-16 text-right">
@@ -253,8 +253,8 @@ export function AssetCard({ asset, mode = 'grid' }: AssetCardProps): React.JSX.E
 
           {/* 파일명 */}
           <div className="px-2 py-1.5">
-            <p className="text-xs text-zinc-300 truncate leading-tight">{asset.name}</p>
-            <p className="text-[10px] text-zinc-500 mt-0.5">.{asset.ext}</p>
+            <p className="text-xs text-zinc-300 truncate leading-tight font-mono">{asset.name}</p>
+            <p className="text-[10px] text-zinc-500 mt-0.5 font-mono">.{asset.ext}</p>
           </div>
         </div>
       </Dropdown>

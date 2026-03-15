@@ -113,7 +113,7 @@ function DirNode({
             <span className="w-3 shrink-0" />
           )}
           <FolderIcon size={12} className="shrink-0 text-zinc-500" />
-          <span className="flex-1 truncate">{label}</span>
+          <span className="flex-1 truncate font-mono">{label}</span>
           {existing && (
             <ScrollText
               size={10}

@@ -155,7 +155,7 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
         {/* 파일명 */}
         <div>
           <p className="text-xs text-zinc-500 mb-1">파일명</p>
-          <p className="text-sm text-zinc-200 break-all">
+          <p className="text-sm text-zinc-200 break-all font-mono">
             {asset.name}.{asset.ext}
           </p>
         </div>
@@ -186,7 +186,7 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
           </div>
           <div className="flex flex-col gap-1 mt-1">
             <span className="text-zinc-500">경로</span>
-            <span className="text-zinc-400 break-all text-[10px] leading-relaxed">
+            <span className="text-zinc-400 break-all text-[10px] leading-relaxed font-mono">
               {asset.path}
             </span>
           </div>
