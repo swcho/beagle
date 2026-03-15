@@ -1,6 +1,6 @@
 import { AutoComplete, Button, Tag as AntTag, Tooltip } from 'antd'
-import { FolderOpen, Tag as TagIcon, X, ScrollText, ExternalLink } from 'lucide-react'
-import { useState, useEffect, useMemo } from 'react'
+import { FolderOpen, Tag as TagIcon, X, ScrollText, ExternalLink, Copy, Check } from 'lucide-react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 
 import type { Asset, Tag } from '@shared/types'
 
@@ -31,6 +31,31 @@ function formatDate(ts: number): string {
 
 function isFileThumbnail(path: string): boolean {
   return Boolean(path) && !path.startsWith('__placeholder:')
+}
+
+function CopyButton({ value }: { value: string }): React.JSX.Element {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      void navigator.clipboard.writeText(value).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      })
+    },
+    [value]
+  )
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-300 shrink-0"
+      title="복사"
+    >
+      {copied ? <Check size={11} className="text-green-400" /> : <Copy size={11} />}
+    </button>
+  )
 }
 
 export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX.Element {
@@ -153,8 +178,11 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
 
       <div className="flex flex-col gap-4 p-4">
         {/* 파일명 */}
-        <div>
-          <p className="text-xs text-zinc-500 mb-1">파일명</p>
+        <div className="group">
+          <div className="flex items-center gap-1 mb-1">
+            <p className="text-xs text-zinc-500">파일명</p>
+            <CopyButton value={`${asset.name}.${asset.ext}`} />
+          </div>
           <p className="text-sm text-zinc-200 break-all font-mono">
             {asset.name}.{asset.ext}
           </p>
@@ -162,30 +190,43 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
 
         {/* 메타데이터 */}
         <div className="flex flex-col gap-1.5 text-xs">
-          <div className="flex justify-between">
+          <div className="group flex justify-between items-center">
             <span className="text-zinc-500">크기</span>
-            <span className="text-zinc-300">{formatBytes(asset.size)}</span>
+            <span className="flex items-center gap-1 text-zinc-300">
+              {formatBytes(asset.size)}
+              <CopyButton value={formatBytes(asset.size)} />
+            </span>
           </div>
           {asset.width && (
-            <div className="flex justify-between">
+            <div className="group flex justify-between items-center">
               <span className="text-zinc-500">해상도</span>
-              <span className="text-zinc-300">
+              <span className="flex items-center gap-1 text-zinc-300">
                 {asset.width} × {asset.height}px
+                <CopyButton value={`${asset.width}x${asset.height}`} />
               </span>
             </div>
           )}
           {asset.duration && (
-            <div className="flex justify-between">
+            <div className="group flex justify-between items-center">
               <span className="text-zinc-500">길이</span>
-              <span className="text-zinc-300">{asset.duration.toFixed(1)}초</span>
+              <span className="flex items-center gap-1 text-zinc-300">
+                {asset.duration.toFixed(1)}초
+                <CopyButton value={asset.duration.toFixed(1)} />
+              </span>
             </div>
           )}
-          <div className="flex justify-between">
+          <div className="group flex justify-between items-center">
             <span className="text-zinc-500">임포트</span>
-            <span className="text-zinc-300">{formatDate(asset.importedAt)}</span>
+            <span className="flex items-center gap-1 text-zinc-300">
+              {formatDate(asset.importedAt)}
+              <CopyButton value={formatDate(asset.importedAt)} />
+            </span>
           </div>
-          <div className="flex flex-col gap-1 mt-1">
-            <span className="text-zinc-500">경로</span>
+          <div className="group flex flex-col gap-1 mt-1">
+            <div className="flex items-center gap-1">
+              <span className="text-zinc-500">경로</span>
+              <CopyButton value={asset.path} />
+            </div>
             <span className="text-zinc-400 break-all text-[10px] leading-relaxed font-mono">
               {asset.path}
             </span>
@@ -202,6 +243,7 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
                   <div
                     className="w-7 h-7 rounded-md border border-zinc-600 cursor-pointer"
                     style={{ backgroundColor: c }}
+                    onClick={() => void navigator.clipboard.writeText(c)}
                   />
                 </Tooltip>
               ))}
@@ -252,35 +294,50 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
               <ScrollText size={11} /> Attribution
             </p>
             <div className="flex flex-col gap-1 text-xs bg-zinc-800 rounded-md p-2.5">
-              <div className="flex justify-between">
+              <div className="group flex justify-between items-center">
                 <span className="text-zinc-500">저작자</span>
-                <span className="text-zinc-300">{asset.attribution.author}</span>
+                <span className="flex items-center gap-1 text-zinc-300">
+                  {asset.attribution.author}
+                  <CopyButton value={asset.attribution.author} />
+                </span>
               </div>
               {asset.attribution.license && (
-                <div className="flex justify-between">
+                <div className="group flex justify-between items-center">
                   <span className="text-zinc-500">라이선스</span>
-                  <span className="text-zinc-300">{asset.attribution.license}</span>
+                  <span className="flex items-center gap-1 text-zinc-300">
+                    {asset.attribution.license}
+                    <CopyButton value={asset.attribution.license} />
+                  </span>
                 </div>
               )}
               {asset.attribution.url && (
-                <div className="flex justify-between items-center">
+                <div className="group flex justify-between items-center">
                   <span className="text-zinc-500">URL</span>
-                  <button
-                    className="flex items-center gap-1 text-blue-400 hover:text-blue-300 truncate max-w-[160px]"
-                    onClick={() => window.open(asset.attribution!.url, '_blank')}
-                    title={asset.attribution.url}
-                  >
-                    <ExternalLink size={10} className="shrink-0" />
-                    <span className="truncate">
-                      {asset.attribution.url.replace(/^https?:\/\//, '')}
-                    </span>
-                  </button>
+                  <span className="flex items-center gap-1">
+                    <button
+                      className="flex items-center gap-1 text-blue-400 hover:text-blue-300 truncate max-w-[140px]"
+                      onClick={() => window.open(asset.attribution!.url, '_blank')}
+                      title={asset.attribution.url}
+                    >
+                      <ExternalLink size={10} className="shrink-0" />
+                      <span className="truncate">
+                        {asset.attribution.url.replace(/^https?:\/\//, '')}
+                      </span>
+                    </button>
+                    <CopyButton value={asset.attribution.url} />
+                  </span>
                 </div>
               )}
               {asset.attribution.note && (
-                <p className="text-zinc-400 text-[10px] leading-relaxed mt-0.5">
-                  {asset.attribution.note}
-                </p>
+                <div className="group flex flex-col gap-0.5 mt-0.5">
+                  <div className="flex items-center gap-1">
+                    <span className="text-zinc-500 text-[10px]">노트</span>
+                    <CopyButton value={asset.attribution.note} />
+                  </div>
+                  <p className="text-zinc-400 text-[10px] leading-relaxed">
+                    {asset.attribution.note}
+                  </p>
+                </div>
               )}
             </div>
           </div>
