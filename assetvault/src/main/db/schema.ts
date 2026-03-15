@@ -15,12 +15,14 @@ export function getDatabase(): Database.Database {
 // ---------------------------------------------------------------------------
 // Migrations — append only. Never edit existing entries.
 // Each migration runs inside a transaction; user_version is bumped atomically.
+// Use `sql` for pure SQL migrations, or `run` for migrations that need logic.
 // ---------------------------------------------------------------------------
-const MIGRATIONS: Array<{ version: number; sql: string }> = [
-  {
-    // v1: initial schema
-    version: 1,
-    sql: `
+const MIGRATIONS: Array<{ version: number; sql?: string; run?: (db: Database.Database) => void }> =
+  [
+    {
+      // v1: initial schema
+      version: 1,
+      sql: `
       CREATE TABLE IF NOT EXISTS attributions (
         id         TEXT PRIMARY KEY,
         url        TEXT,
@@ -77,14 +79,39 @@ const MIGRATIONS: Array<{ version: number; sql: string }> = [
 
       CREATE INDEX IF NOT EXISTS idx_assets_ext      ON assets(ext);
       CREATE INDEX IF NOT EXISTS idx_assets_imported ON assets(imported_at DESC);
-    `,
-  },
-  // Add future migrations below — example:
-  // {
-  //   version: 2,
-  //   sql: `ALTER TABLE assets ADD COLUMN some_new_col TEXT;`,
-  // },
-]
+    `
+    },
+    {
+      // v2: backfill attribution_id for DBs created before the migration system.
+      // v1 used CREATE TABLE IF NOT EXISTS, so pre-existing assets tables were
+      // left unchanged and never received the attribution_id column.
+      version: 2,
+      run: (database: Database.Database) => {
+        database.exec(`
+        CREATE TABLE IF NOT EXISTS attributions (
+          id         TEXT PRIMARY KEY,
+          url        TEXT,
+          author     TEXT NOT NULL,
+          license    TEXT,
+          note       TEXT,
+          created_at INTEGER DEFAULT (unixepoch())
+        );
+      `)
+
+        const cols = database.pragma('table_info(assets)') as Array<{ name: string }>
+        if (!cols.some((c) => c.name === 'attribution_id')) {
+          database.exec(
+            `ALTER TABLE assets ADD COLUMN attribution_id TEXT REFERENCES attributions(id) ON DELETE SET NULL;`
+          )
+        }
+      }
+    }
+    // Add future migrations below — example:
+    // {
+    //   version: 3,
+    //   sql: `ALTER TABLE assets ADD COLUMN some_new_col TEXT;`,
+    // },
+  ]
 
 function runMigrations(database: Database.Database): void {
   const current = database.pragma('user_version', { simple: true }) as number
@@ -94,7 +121,11 @@ function runMigrations(database: Database.Database): void {
 
   for (const migration of pending) {
     database.transaction(() => {
-      database.exec(migration.sql)
+      if (migration.run) {
+        migration.run(database)
+      } else if (migration.sql) {
+        database.exec(migration.sql)
+      }
       database.pragma(`user_version = ${migration.version}`)
     })()
   }

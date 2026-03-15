@@ -13,15 +13,15 @@ import {
   ChevronDown,
   ScrollText
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import type { AssetType, Attribution, DirectoryNode, Folder } from '@shared/types'
 
+import { AttributionModal } from '@renderer/components/asset/AttributionModal'
 import { useFilterStore } from '@renderer/stores/filterStore'
 import { useFolderStore } from '@renderer/stores/folderStore'
 import { useTagStore } from '@renderer/stores/tagStore'
 import { useUIStore } from '@renderer/stores/uiStore'
-import { AttributionModal } from '@renderer/components/asset/AttributionModal'
 
 const ASSET_TYPES: { type: AssetType; label: string; className: string }[] = [
   { type: 'image', label: 'IMG', className: 'bg-blue-900 text-blue-300' },
@@ -115,7 +115,11 @@ function DirNode({
           <FolderIcon size={12} className="shrink-0 text-zinc-500" />
           <span className="flex-1 truncate">{label}</span>
           {existing && (
-            <ScrollText size={10} className="shrink-0 text-zinc-500" title={`Attribution: ${existing.author}`} />
+            <ScrollText
+              size={10}
+              className="shrink-0 text-zinc-500"
+              title={`Attribution: ${existing.author}`}
+            />
           )}
           <span className="text-[10px] text-zinc-600 shrink-0">{leaf.count}</span>
         </div>
@@ -259,10 +263,10 @@ export function Sidebar(): React.JSX.Element {
     new Map()
   )
 
-  async function refreshDirectoryAttributions(): Promise<void> {
+  const refreshDirectoryAttributions = useCallback(async () => {
     const map = await window.api.getDirectoryAttributionMap()
     setDirectoryAttributions(new Map(Object.entries(map)))
-  }
+  }, [])
 
   function handleSetAttribution(path: string, existing?: Attribution): void {
     setAttributionModal({ path, existing })
@@ -281,8 +285,9 @@ export function Sidebar(): React.JSX.Element {
     fetchTags()
     fetchFolders()
     fetchDirectories()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshDirectoryAttributions()
-  }, [fetchTags, fetchFolders, fetchDirectories])
+  }, [fetchTags, fetchFolders, fetchDirectories, refreshDirectoryAttributions])
 
   function toggleTagFilter(tagId: string): void {
     const next = tagIds.includes(tagId) ? tagIds.filter((id) => id !== tagId) : [...tagIds, tagId]

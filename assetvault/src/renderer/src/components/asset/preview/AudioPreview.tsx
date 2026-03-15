@@ -26,7 +26,10 @@ export function AudioPreview({ asset, autoPlay = false }: Props): React.JSX.Elem
     if (!autoPlay) return
     const audio = audioRef.current
     if (!audio) return
-    audio.play().then(() => setIsPlaying(true)).catch(() => {})
+    audio
+      .play()
+      .then(() => setIsPlaying(true))
+      .catch(() => {})
   }, [autoPlay])
 
   // 언마운트 시 정지

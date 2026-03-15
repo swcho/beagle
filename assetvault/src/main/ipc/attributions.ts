@@ -13,9 +13,8 @@ import {
 export function registerAttributionHandlers(): void {
   ipcMain.handle('get-attributions', () => getAttributions())
 
-  ipcMain.handle(
-    'create-attribution',
-    (_event, data: Omit<Attribution, 'id' | 'createdAt'>) => createAttribution(data)
+  ipcMain.handle('create-attribution', (_event, data: Omit<Attribution, 'id' | 'createdAt'>) =>
+    createAttribution(data)
   )
 
   ipcMain.handle(

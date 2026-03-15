@@ -31,13 +31,7 @@ function SceneModel({ asset }: { asset: Asset }): React.JSX.Element {
   return <GLTFModel url={url} />
 }
 
-function CaptureFrame({
-  asset,
-  onDone
-}: {
-  asset: Asset
-  onDone: () => void
-}): null {
+function CaptureFrame({ asset, onDone }: { asset: Asset; onDone: () => void }): null {
   const { gl } = useThree()
   const captured = useRef(false)
 

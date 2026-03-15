@@ -271,7 +271,9 @@ export function AssetDetail({ asset, onClose, onAssetUpdate }: Props): React.JSX
                     title={asset.attribution.url}
                   >
                     <ExternalLink size={10} className="shrink-0" />
-                    <span className="truncate">{asset.attribution.url.replace(/^https?:\/\//, '')}</span>
+                    <span className="truncate">
+                      {asset.attribution.url.replace(/^https?:\/\//, '')}
+                    </span>
                   </button>
                 </div>
               )}

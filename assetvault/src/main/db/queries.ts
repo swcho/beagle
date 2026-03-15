@@ -60,7 +60,9 @@ function rowToAsset(row: AssetRow): Asset {
 
   let attribution: Attribution | undefined
   try {
-    attribution = row.attribution_json ? rowToAttribution(JSON.parse(row.attribution_json)) : undefined
+    attribution = row.attribution_json
+      ? rowToAttribution(JSON.parse(row.attribution_json))
+      : undefined
   } catch {
     attribution = undefined
   }
@@ -481,9 +483,7 @@ export function getAttributions(): Attribution[] {
   return rows.map(rowToAttribution)
 }
 
-export function createAttribution(
-  data: Omit<Attribution, 'id' | 'createdAt'>
-): Attribution {
+export function createAttribution(data: Omit<Attribution, 'id' | 'createdAt'>): Attribution {
   const db = getDatabase()
   const id = uuidv4()
   db.prepare(
@@ -500,10 +500,22 @@ export function updateAttribution(
   const db = getDatabase()
   const fields: string[] = []
   const params: Record<string, unknown> = { id }
-  if (data.url !== undefined) { fields.push('url = @url'); params.url = data.url }
-  if (data.author !== undefined) { fields.push('author = @author'); params.author = data.author }
-  if (data.license !== undefined) { fields.push('license = @license'); params.license = data.license }
-  if (data.note !== undefined) { fields.push('note = @note'); params.note = data.note }
+  if (data.url !== undefined) {
+    fields.push('url = @url')
+    params.url = data.url
+  }
+  if (data.author !== undefined) {
+    fields.push('author = @author')
+    params.author = data.author
+  }
+  if (data.license !== undefined) {
+    fields.push('license = @license')
+    params.license = data.license
+  }
+  if (data.note !== undefined) {
+    fields.push('note = @note')
+    params.note = data.note
+  }
   if (fields.length > 0) {
     db.prepare(`UPDATE attributions SET ${fields.join(', ')} WHERE id = @id`).run(params)
   }

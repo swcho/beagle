@@ -32,8 +32,13 @@ export function AttributionModal({
   onClose,
   onApplied
 }: Props): React.JSX.Element {
-  const { attributions, fetchAttributions, createAttribution, updateAttribution, setDirectoryAttribution } =
-    useAttributionStore()
+  const {
+    attributions,
+    fetchAttributions,
+    createAttribution,
+    updateAttribution,
+    setDirectoryAttribution
+  } = useAttributionStore()
 
   const [mode, setMode] = useState<'new' | 'existing'>('new')
   const [selectedId, setSelectedId] = useState<string | undefined>(existingAttribution?.id)

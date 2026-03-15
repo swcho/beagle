@@ -26,14 +26,31 @@ function App(): React.JSX.Element {
   const { fetchDirectories } = useFolderStore()
   const { query, types, tagIds, folderId, directory, colors, colorTolerance, sortBy, sortOrder } =
     useFilterStore()
-  const { selectedAssetId, setSelectedAssetId, sidebarWidth, setSidebarWidth, detailWidth, setDetailWidth } = useUIStore()
+  const {
+    selectedAssetId,
+    setSelectedAssetId,
+    sidebarWidth,
+    setSidebarWidth,
+    detailWidth,
+    setDetailWidth
+  } = useUIStore()
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [importing, setImporting] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()
 
   const selectedAsset = assets.find((a) => a.id === selectedAssetId) ?? null
   const currentFilter = useMemo(
-    () => ({ query, types, tagIds, folderId, directory, colors, colorTolerance, sortBy, sortOrder }),
+    () => ({
+      query,
+      types,
+      tagIds,
+      folderId,
+      directory,
+      colors,
+      colorTolerance,
+      sortBy,
+      sortOrder
+    }),
     [query, types, tagIds, folderId, directory, colors, colorTolerance, sortBy, sortOrder]
   )
 
